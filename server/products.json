@@ -1,0 +1,210 @@
+[
+  {
+    "id": 1,
+    "name": "iPhone 14 Pro",
+    "description": "Latest flagship smartphone with advanced camera system",
+    "price": 999.99,
+    "category": 1
+  },
+  {
+    "id": 2,
+    "name": "Sony A7 IV",
+    "description": "Full-frame mirrorless camera for professionals",
+    "price": 2499.99,
+    "category": 2
+  },
+  {
+    "id": 3,
+    "name": "MacBook Pro 16",
+    "description": "Powerful laptop for creative professionals",
+    "price": 2399.99,
+    "category": 3
+  },
+  {
+    "id": 4,
+    "name": "Sony WH-1000XM4",
+    "description": "Premium noise cancelling headphones",
+    "price": 349.99,
+    "category": 4
+  },
+  {
+    "id": 5,
+    "name": "Apple Watch Series 7",
+    "description": "Advanced smartwatch with health monitoring features",
+    "price": 399.99,
+    "category": 5
+  },
+  {
+    "id": 6,
+    "name": "Sony WH-1000XM4",
+    "description": "Premium noise cancelling headphones",
+    "price": 349.99,
+    "category": 4
+  },
+  {
+    "id": 7,
+    "name": "aliqua voluptate exercitation",
+    "description": "amet enim irure reprehenderit",
+    "price": -6002014,
+    "category": "CHARGERS"
+  },
+  {
+    "id": 8,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 9,
+    "name": "ut",
+    "description": "amet veniam enim",
+    "price": -87411496,
+    "category": "MICROPHONES"
+  },
+  {
+    "id": 10,
+    "name": "ut",
+    "description": "amet veniam enim",
+    "price": -87411496,
+    "category": "MICROPHONES"
+  },
+  {
+    "id": 11,
+    "name": "Duis dolor",
+    "description": "aute nisi ipsum",
+    "price": 67059164,
+    "category": "MICROPHONES"
+  },
+  {
+    "id": 12,
+    "name": "Duis dolor",
+    "description": "aute nisi ipsum",
+    "price": 67059164,
+    "category": "MICROPHONES"
+  },
+  {
+    "id": 13,
+    "name": "proident Duis in",
+    "description": "velit",
+    "price": -44604992,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 14,
+    "name": "quis",
+    "description": "ut",
+    "price": 7448914.5,
+    "category": "MODEMS"
+  },
+  {
+    "id": 15,
+    "name": "qui et tempor esse ad",
+    "description": "cillum consectetur occaecat dolor aliquip",
+    "price": -81339592,
+    "category": "MODEMS"
+  },
+  {
+    "id": 16,
+    "name": "amet ullamco occaecat Ut dolor",
+    "description": "minim est nisi",
+    "price": 22627128,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 17,
+    "name": "nulla ut sit",
+    "description": "sunt",
+    "price": -34551652,
+    "category": "HEADPHONES"
+  },
+  {
+    "id": 18,
+    "name": "ea aliquip eiusmod voluptate",
+    "description": "qui ut voluptate",
+    "price": 96417264,
+    "category": "HEADPHONES"
+  },
+  {
+    "id": 19,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 20,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 21,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 22,
+    "name": "Luxurious Wooden Fish",
+    "description": "Introducing the Denmark-inspired Chips, blending impolite style with local craftsmanship",
+    "price": 865.6412353515625
+  },
+  {
+    "id": 23,
+    "name": "consequat ut",
+    "description": "deserunt consequat sit",
+    "price": -20345266,
+    "category": "TELEVISIONS"
+  },
+  {
+    "id": 24,
+    "name": "consequat ut",
+    "description": "deserunt consequat sit",
+    "price": -20345266,
+    "category": "TELEVISIONS"
+  },
+  {
+    "id": 25,
+    "name": "consequat ut",
+    "description": "deserunt consequat sit",
+    "price": 200,
+    "category": "TELEVISIONS"
+  },
+  {
+    "id": 26,
+    "name": "consequat ut",
+    "description": "deserunt consequat sit",
+    "price": 200,
+    "category": "TELEVISIONS"
+  },
+  {
+    "id": 27,
+    "name": "pariatur dolore voluptate",
+    "description": "voluptate mollit ea",
+    "price": 22,
+    "category": "CHARGERS"
+  },
+  {
+    "id": 28,
+    "name": "pariatur dolore volate",
+    "description": "voluptate mollit ea",
+    "price": 22,
+    "category": "CHARGERS"
+  },
+  {
+    "id": 29,
+    "name": "pariatur dolore volate",
+    "description": "voluptate mollit ea",
+    "price": 22,
+    "category": "CHARGERS"
+  },
+  {
+    "id": 30,
+    "name": "Soft Ceramic Towels",
+    "description": "Professional-grade Chair perfect for difficult training and recreational use",
+    "price": 646.7433471679688
+  }
+]

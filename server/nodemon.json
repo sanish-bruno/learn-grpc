@@ -1,0 +1,10 @@
+{
+    "ignore": [
+        "products.json"
+    ],
+    "watch": [
+        "*.js",
+        "*.proto"
+    ],
+    "ext": "js,json,proto"
+}
