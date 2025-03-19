@@ -206,5 +206,12 @@
     "name": "Soft Ceramic Towels",
     "description": "Professional-grade Chair perfect for difficult training and recreational use",
     "price": 646.7433471679688
+  },
+  {
+    "id": 31,
+    "name": "Ergonomic Plastic Salad",
+    "description": "The Apollotech B340 is an affordable wireless mouse with reliable connectivity, 12 months battery life and modern design",
+    "price": 40.529998779296875,
+    "category": "SMARTPHONE"
   }
 ]
