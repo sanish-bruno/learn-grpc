@@ -724,24 +724,25 @@ ipcMain.handle(
     }
   ) => {
     try {
-      if (useReflection) {
-        // Use reflection to call the method
-        return await callMethodWithReflection(
-          serverUrl,
-          serviceName,
-          methodName,
-          requestData
-        );
-      } else {
-        // Use proto file to call the method
-        return await callMethodWithProtoFile(
-          serverUrl,
-          serviceName,
-          methodName,
-          requestData,
-          protoPath
-        );
-      }
+      // if (useReflection) {
+      //   // Use reflection to call the method
+      //   return await callMethodWithReflection(
+      //     serverUrl,
+      //     serviceName,
+      //     methodName,
+      //     requestData,
+      //     protoPath,
+      //   );
+      // } else {
+      // Use proto file to call the method
+      return await callMethodWithProtoFile(
+        serverUrl,
+        serviceName,
+        methodName,
+        requestData,
+        protoPath
+      );
+      // }
     } catch (err) {
       console.error("Error calling method:", err);
       return { success: false, error: err.message };
@@ -750,290 +751,180 @@ ipcMain.handle(
 );
 
 // Call a gRPC method using reflection
-async function callMethodWithReflection(
-  serverUrl,
-  serviceName,
-  methodName,
-  requestData
-) {
-  let reflection = null;
-  let tempProtoFilePath = null;
+// async function callMethodWithReflection(
+//   serverUrl,
+//   serviceName,
+//   methodName,
+//   requestData,
+//   protoPath
+// ) {
+//   let reflection = null;
+//   let tempProtoFilePath = null;
 
-  try {
-    console.log(`Setting up reflection client for ${serverUrl}`);
+//   try {
+//     console.log(`Setting up reflection client for ${serverUrl}`);
 
-    // Create the reflection client correctly
-    reflection = new grpcReflection.Client(
-      serverUrl,
-      grpc.credentials.createInsecure()
-    );
+//     // Create the reflection client correctly
+//     reflection = new grpcReflection.Client(
+//       serverUrl,
+//       grpc.credentials.createInsecure()
+//     );
 
-    console.log(`Getting service descriptor for ${serviceName}`);
+//     console.log(`Getting service descriptor for ${serviceName}`);
 
-    // First list all services to check reflection support
-    const allServices = await reflection.listServices();
-    console.log(`Found ${allServices.length} services via reflection`);
+//     // First list all services to check reflection support
+//     const allServices = await reflection.listServices();
+//     console.log(`Found ${allServices.length} services via reflection`);
 
-    // Get service information
-    const serviceInfo = await reflection.fileContainingSymbol(serviceName);
-    console.log(`Got service descriptor for ${serviceName}`);
+//     // Get service information
+//     const serviceInfo = await reflection.fileContainingSymbol(serviceName);
+//     console.log(`Got service descriptor for ${serviceName}`);
 
-    // Parse package and service name
-    const packageName = serviceName.substring(0, serviceName.lastIndexOf("."));
-    const serviceClassName = serviceName.substring(
-      serviceName.lastIndexOf(".") + 1
-    );
+//     // Parse package and service name
+//     const packageName = serviceName.substring(0, serviceName.lastIndexOf("."));
+//     const serviceClassName = serviceName.substring(
+//       serviceName.lastIndexOf(".") + 1
+//     );
 
-    // Extract service details
-    const serviceDetails = {};
-    serviceDetails[serviceName] = extractServiceDetailsFromReflection(
-      serviceInfo,
-      packageName,
-      serviceClassName,
-      serviceName
-    );
+//     // Extract service details
+//     const serviceDetails = {};
+//     serviceDetails[serviceName] = extractServiceDetailsFromReflection(
+//       serviceInfo,
+//       packageName,
+//       serviceClassName,
+//       serviceName
+//     );
 
-    if (!serviceDetails[serviceName]) {
-      throw new Error(`Failed to extract service details for ${serviceName}`);
-    }
+//     if (!serviceDetails[serviceName]) {
+//       throw new Error(`Failed to extract service details for ${serviceName}`);
+//     }
 
-    // Generate the complete proto file content
-    const protoContent = generateProtoFileFromReflection(serviceDetails);
+//     // Generate the complete proto file content
+//     const protoContent = generateProtoFileFromReflection(serviceDetails);
 
-    // Validate the proto file content - make sure it contains essential elements
-    if (!protoContent.includes(`syntax = "proto3"`)) {
-      throw new Error("Generated proto file is missing syntax declaration");
-    }
+//     // Validate the proto file content - make sure it contains essential elements
+//     if (!protoContent.includes(`syntax = "proto3"`)) {
+//       throw new Error("Generated proto file is missing syntax declaration");
+//     }
 
-    if (!protoContent.includes(`package ${packageName}`)) {
-      throw new Error(
-        `Generated proto file is missing package ${packageName} declaration`
-      );
-    }
+//     if (!protoContent.includes(`package ${packageName}`)) {
+//       throw new Error(
+//         `Generated proto file is missing package ${packageName} declaration`
+//       );
+//     }
 
-    if (!protoContent.includes(`service ${serviceClassName}`)) {
-      throw new Error(
-        `Generated proto file is missing service ${serviceClassName} definition`
-      );
-    }
+//     if (!protoContent.includes(`service ${serviceClassName}`)) {
+//       throw new Error(
+//         `Generated proto file is missing service ${serviceClassName} definition`
+//       );
+//     }
 
-    if (!protoContent.includes(`rpc ${methodName}`)) {
-      throw new Error(
-        `Generated proto file is missing method ${methodName} definition`
-      );
-    }
+//     if (!protoContent.includes(`rpc ${methodName}`)) {
+//       throw new Error(
+//         `Generated proto file is missing method ${methodName} definition`
+//       );
+//     }
 
-    // Save to a temporary file
-    tempProtoFilePath = path.join(
-      app.getPath("temp"),
-      `temp_${Date.now()}.proto`
-    );
-    fs.writeFileSync(tempProtoFilePath, protoContent);
-    console.log(`Saved temporary proto file to: ${tempProtoFilePath}`);
-    console.log(
-      `Proto file content validation passed for ${serviceName}.${methodName}`
-    );
+//     // Save to a temporary file
+//     tempProtoFilePath = path.join(
+//       app.getPath("temp"),
+//       `temp_${Date.now()}.proto`
+//     );
+//     fs.writeFileSync(tempProtoFilePath, protoContent);
+//     console.log(`Saved temporary proto file to: ${tempProtoFilePath}`);
+//     console.log(
+//       `Proto file content validation passed for ${serviceName}.${methodName}`
+//     );
 
-    // Now use the standard approach to call a method using this proto file
-    try {
-      const result = await callMethodWithProtoFile(
-        serverUrl,
-        serviceName,
-        methodName,
-        requestData,
-        tempProtoFilePath
-      );
-      return result;
-    } catch (callError) {
-      console.error(
-        `Error when calling gRPC method with generated proto file:`,
-        callError
-      );
-      // Try to provide more helpful error information
-      if (callError.message.includes("not found in proto definition")) {
-        console.error(
-          "The generated proto file might be missing some type definitions."
-        );
-        // Log the proto file content for debugging
-        console.error("Generated proto file content:", protoContent);
-      }
-      throw callError;
-    }
-  } catch (err) {
-    console.error("Error in reflection-based method call:", err);
-    throw err;
-  } finally {
-    // Always close the reflection client if it was created
-    if (reflection) {
-      try {
-        if (typeof reflection.close === "function") {
-          reflection.close();
-          console.log(`Closed reflection client`);
-        } else {
-          console.log(
-            `Reflection client doesn't have a close method, skipping`
-          );
-        }
-      } catch (err) {
-        console.error(`Error closing reflection client:`, err);
-      }
-    }
+//     // Now use the standard approach to call a method using this proto file
+//     try {
+//       const result = await callMethodWithProtoFile(
+//         serverUrl,
+//         serviceName,
+//         methodName,
+//         requestData,
+//         tempProtoFilePath
+//       );
+//       return result;
+//     } catch (callError) {
+//       console.error(
+//         `Error when calling gRPC method with generated proto file:`,
+//         callError
+//       );
+//       // Try to provide more helpful error information
+//       if (callError.message.includes("not found in proto definition")) {
+//         console.error(
+//           "The generated proto file might be missing some type definitions."
+//         );
+//         // Log the proto file content for debugging
+//         console.error("Generated proto file content:", protoContent);
+//       }
+//       throw callError;
+//     }
+//   } catch (err) {
+//     console.error("Error in reflection-based method call:", err);
+//     throw err;
+//   } finally {
+//     // Always close the reflection client if it was created
+//     if (reflection) {
+//       try {
+//         if (typeof reflection.close === "function") {
+//           reflection.close();
+//           console.log(`Closed reflection client`);
+//         } else {
+//           console.log(
+//             `Reflection client doesn't have a close method, skipping`
+//           );
+//         }
+//       } catch (err) {
+//         console.error(`Error closing reflection client:`, err);
+//       }
+//     }
 
-    // Clean up the temporary proto file
-    if (tempProtoFilePath && fs.existsSync(tempProtoFilePath)) {
-      try {
-        fs.unlinkSync(tempProtoFilePath);
-        console.log(`Deleted temporary proto file: ${tempProtoFilePath}`);
-      } catch (err) {
-        console.error(`Error deleting temporary proto file:`, err);
-      }
-    }
-  }
-}
-
-// Helper function to generate in-memory package definition from reflection data
-function generateInMemoryPackageDefinition(serviceInfo, packageName) {
-  console.log("Generating in-memory package definition from reflection data");
-  console.log("Package name:", packageName);
-
-  try {
-    // Process the reflection data
-    if (serviceInfo && serviceInfo.nested) {
-      // Extract service and message information
-      const services = extractServicesFromReflection(serviceInfo, packageName);
-      console.log("Extracted services:", Object.keys(services));
-
-      // Get the service name - should be like "Product" (without the package)
-      const serviceName =
-        Object.keys(services).length > 0
-          ? Object.keys(services)[0].split(".")[1]
-          : "";
-
-      console.log(
-        `Trying to create client for service: ${packageName}.${serviceName}`
-      );
-
-      if (!serviceName) {
-        throw new Error(`No service found in package ${packageName}`);
-      }
-
-      // Create service definition from the first service found
-      const serviceDefinition = {};
-      const service = services[`${packageName}.${serviceName}`];
-
-      if (!service || !service.methods) {
-        throw new Error(
-          `No methods found for service ${packageName}.${serviceName}`
-        );
-      }
-
-      // Add methods to service definition
-      Object.keys(service.methods).forEach((methodName) => {
-        const method = service.methods[methodName];
-        console.log(
-          `Adding method: ${methodName}, requestStream: ${method.requestStream}, responseStream: ${method.responseStream}`
-        );
-
-        // For each method, we need to properly define the serialization/deserialization
-        serviceDefinition[methodName] = {
-          path: `/${packageName}.${serviceName}/${methodName}`,
-          requestStream: method.requestStream || false,
-          responseStream: method.responseStream || false,
-
-          // For proper serialization, we'll use the proto file approach for now
-          // The simplified JSON approach doesn't work as it doesn't follow protobuf binary format
-          requestSerialize: function (arg) {
-            // Basic implementation that should work for simple objects
-            // Note: proper solution would be to use the protobufjs library
-            console.log(`Serializing request for ${methodName}:`, arg);
-            return Buffer.from(JSON.stringify(arg));
-          },
-          requestDeserialize: function (buffer) {
-            // Basic implementation
-            try {
-              const str = buffer.toString();
-              console.log(`Deserialized request buffer to string: ${str}`);
-              return JSON.parse(str);
-            } catch (err) {
-              console.error("Error deserializing request:", err);
-              throw err;
-            }
-          },
-          responseSerialize: function (arg) {
-            console.log(`Serializing response for ${methodName}:`, arg);
-            return Buffer.from(JSON.stringify(arg));
-          },
-          responseDeserialize: function (buffer) {
-            try {
-              const str = buffer.toString();
-              console.log(`Deserialized response buffer to string: ${str}`);
-              return JSON.parse(str);
-            } catch (err) {
-              console.error("Error deserializing response:", err);
-              throw err;
-            }
-          },
-        };
-      });
-
-      // Create a client constructor directly
-      const ServiceClient =
-        grpc.makeGenericClientConstructor(serviceDefinition);
-
-      // Return both the package structure and a direct client constructor
-      const result = {
-        // Create the package structure that matches what the main code expects
-        [packageName]: {
-          [serviceName]: ServiceClient,
-        },
-        // Also provide direct access to the client constructor
-        client: ServiceClient,
-      };
-
-      console.log("Successfully created client constructor");
-      return result;
-    } else {
-      console.error("Invalid service info structure");
-      throw new Error("Invalid service info structure");
-    }
-  } catch (e) {
-    console.error("Error generating in-memory client:", e);
-    throw e;
-  }
-}
+//     // Clean up the temporary proto file
+//     if (tempProtoFilePath && fs.existsSync(tempProtoFilePath)) {
+//       try {
+//         fs.unlinkSync(tempProtoFilePath);
+//         console.log(`Deleted temporary proto file: ${tempProtoFilePath}`);
+//       } catch (err) {
+//         console.error(`Error deleting temporary proto file:`, err);
+//       }
+//     }
+//   }
+// }
 
 // Extract services from reflection data
-function extractServicesFromReflection(serviceInfo, packageName) {
-  const services = {};
+// function extractServicesFromReflection(serviceInfo, packageName) {
+//   const services = {};
 
-  try {
-    if (
-      serviceInfo.nested &&
-      serviceInfo.nested[packageName] &&
-      serviceInfo.nested[packageName].nested
-    ) {
-      const packageLevel = serviceInfo.nested[packageName].nested;
+//   try {
+//     if (
+//       serviceInfo.nested &&
+//       serviceInfo.nested[packageName] &&
+//       serviceInfo.nested[packageName].nested
+//     ) {
+//       const packageLevel = serviceInfo.nested[packageName].nested;
 
-      // Find all service definitions in the package
-      Object.keys(packageLevel).forEach((key) => {
-        const item = packageLevel[key];
+//       // Find all service definitions in the package
+//       Object.keys(packageLevel).forEach((key) => {
+//         const item = packageLevel[key];
 
-        // If it has methods, it's a service
-        if (item.methods) {
-          const fullServiceName = `${packageName}.${key}`;
-          services[fullServiceName] = {
-            name: key,
-            methods: item.methods,
-          };
-        }
-      });
-    }
-  } catch (e) {
-    console.error("Error extracting services from reflection data:", e);
-  }
+//         // If it has methods, it's a service
+//         if (item.methods) {
+//           const fullServiceName = `${packageName}.${key}`;
+//           services[fullServiceName] = {
+//             name: key,
+//             methods: item.methods,
+//           };
+//         }
+//       });
+//     }
+//   } catch (e) {
+//     console.error("Error extracting services from reflection data:", e);
+//   }
 
-  return services;
-}
+//   return services;
+// }
 
 // Extract message definitions from reflection data
 function extractMessagesFromReflection(serviceInfo, packageName) {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -34,6 +34,19 @@ const App = () => {
   const [calling, setCalling] = useState(false);
   const [reflectionFailed, setReflectionFailed] = useState(false);
   const [isReflectionMode, setIsReflectionMode] = useState(false);
+
+  // Effect to reload services when serverUrl changes if we have a proto file
+  useEffect(() => {
+    console.log("calling useEffect");
+    // Skip the initial render
+    const shouldLoadServices = protoFile && serverUrl && !isReflectionMode; // Don't reload for reflection mode
+
+    if (shouldLoadServices) {
+      loadServices();
+    }
+    // We intentionally don't include loadServices in dependencies
+    // to avoid infinite loops
+  }, [serverUrl, protoFile, isReflectionMode]);
 
   const generateSampleValue = (field) => {
     try {
@@ -203,6 +216,7 @@ const App = () => {
         setRequestMessage("");
         setIsReflectionMode(false);
         setReflectionFailed(false);
+        await loadServices(result.data);
       } else {
         setError("Failed to load proto file");
       }
@@ -428,19 +442,21 @@ const App = () => {
               {protoFile ? "Change Proto File" : "Select Proto File"}
             </Button>
 
-            {protoFile && (
+            {protoFile && !isReflectionMode && (
               <>
                 <Chip
                   label={protoFile.path.split("/").pop()}
                   onDelete={() => setProtoFile(null)}
                 />
-                <Button
-                  variant="contained"
-                  onClick={() => loadServices()}
-                  disabled={!serverUrl || !protoFile || loading}
-                >
-                  Load Services
-                </Button>
+                {loading && (
+                  <Typography
+                    variant="caption"
+                    sx={{ ml: 1, display: "flex", alignItems: "center" }}
+                  >
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Loading services...
+                  </Typography>
+                )}
               </>
             )}
           </Box>
