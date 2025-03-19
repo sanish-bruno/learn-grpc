@@ -724,174 +724,39 @@ ipcMain.handle(
     }
   ) => {
     try {
-      // if (useReflection) {
-      //   // Use reflection to call the method
-      //   return await callMethodWithReflection(
-      //     serverUrl,
-      //     serviceName,
-      //     methodName,
-      //     requestData,
-      //     protoPath,
-      //   );
-      // } else {
       // Use proto file to call the method
-      return await callMethodWithProtoFile(
+      const result = await callMethodWithProtoFile(
         serverUrl,
         serviceName,
         methodName,
         requestData,
         protoPath
       );
-      // }
+
+      // If this is a streaming method, we need to start the stream
+      if (result.streaming) {
+        console.log(
+          `Method ${methodName} is a streaming method (${result.streamType})`
+        );
+        // Start the stream and get the streamId
+        const streamResult = result.startStream(event);
+        // Return streaming information to the client
+        return {
+          success: true,
+          streaming: true,
+          streamType: result.streamType,
+          streamId: streamResult.streamId,
+        };
+      }
+
+      // For regular unary calls, just return the result
+      return result;
     } catch (err) {
       console.error("Error calling method:", err);
       return { success: false, error: err.message };
     }
   }
 );
-
-// Call a gRPC method using reflection
-// async function callMethodWithReflection(
-//   serverUrl,
-//   serviceName,
-//   methodName,
-//   requestData,
-//   protoPath
-// ) {
-//   let reflection = null;
-//   let tempProtoFilePath = null;
-
-//   try {
-//     console.log(`Setting up reflection client for ${serverUrl}`);
-
-//     // Create the reflection client correctly
-//     reflection = new grpcReflection.Client(
-//       serverUrl,
-//       grpc.credentials.createInsecure()
-//     );
-
-//     console.log(`Getting service descriptor for ${serviceName}`);
-
-//     // First list all services to check reflection support
-//     const allServices = await reflection.listServices();
-//     console.log(`Found ${allServices.length} services via reflection`);
-
-//     // Get service information
-//     const serviceInfo = await reflection.fileContainingSymbol(serviceName);
-//     console.log(`Got service descriptor for ${serviceName}`);
-
-//     // Parse package and service name
-//     const packageName = serviceName.substring(0, serviceName.lastIndexOf("."));
-//     const serviceClassName = serviceName.substring(
-//       serviceName.lastIndexOf(".") + 1
-//     );
-
-//     // Extract service details
-//     const serviceDetails = {};
-//     serviceDetails[serviceName] = extractServiceDetailsFromReflection(
-//       serviceInfo,
-//       packageName,
-//       serviceClassName,
-//       serviceName
-//     );
-
-//     if (!serviceDetails[serviceName]) {
-//       throw new Error(`Failed to extract service details for ${serviceName}`);
-//     }
-
-//     // Generate the complete proto file content
-//     const protoContent = generateProtoFileFromReflection(serviceDetails);
-
-//     // Validate the proto file content - make sure it contains essential elements
-//     if (!protoContent.includes(`syntax = "proto3"`)) {
-//       throw new Error("Generated proto file is missing syntax declaration");
-//     }
-
-//     if (!protoContent.includes(`package ${packageName}`)) {
-//       throw new Error(
-//         `Generated proto file is missing package ${packageName} declaration`
-//       );
-//     }
-
-//     if (!protoContent.includes(`service ${serviceClassName}`)) {
-//       throw new Error(
-//         `Generated proto file is missing service ${serviceClassName} definition`
-//       );
-//     }
-
-//     if (!protoContent.includes(`rpc ${methodName}`)) {
-//       throw new Error(
-//         `Generated proto file is missing method ${methodName} definition`
-//       );
-//     }
-
-//     // Save to a temporary file
-//     tempProtoFilePath = path.join(
-//       app.getPath("temp"),
-//       `temp_${Date.now()}.proto`
-//     );
-//     fs.writeFileSync(tempProtoFilePath, protoContent);
-//     console.log(`Saved temporary proto file to: ${tempProtoFilePath}`);
-//     console.log(
-//       `Proto file content validation passed for ${serviceName}.${methodName}`
-//     );
-
-//     // Now use the standard approach to call a method using this proto file
-//     try {
-//       const result = await callMethodWithProtoFile(
-//         serverUrl,
-//         serviceName,
-//         methodName,
-//         requestData,
-//         tempProtoFilePath
-//       );
-//       return result;
-//     } catch (callError) {
-//       console.error(
-//         `Error when calling gRPC method with generated proto file:`,
-//         callError
-//       );
-//       // Try to provide more helpful error information
-//       if (callError.message.includes("not found in proto definition")) {
-//         console.error(
-//           "The generated proto file might be missing some type definitions."
-//         );
-//         // Log the proto file content for debugging
-//         console.error("Generated proto file content:", protoContent);
-//       }
-//       throw callError;
-//     }
-//   } catch (err) {
-//     console.error("Error in reflection-based method call:", err);
-//     throw err;
-//   } finally {
-//     // Always close the reflection client if it was created
-//     if (reflection) {
-//       try {
-//         if (typeof reflection.close === "function") {
-//           reflection.close();
-//           console.log(`Closed reflection client`);
-//         } else {
-//           console.log(
-//             `Reflection client doesn't have a close method, skipping`
-//           );
-//         }
-//       } catch (err) {
-//         console.error(`Error closing reflection client:`, err);
-//       }
-//     }
-
-//     // Clean up the temporary proto file
-//     if (tempProtoFilePath && fs.existsSync(tempProtoFilePath)) {
-//       try {
-//         fs.unlinkSync(tempProtoFilePath);
-//         console.log(`Deleted temporary proto file: ${tempProtoFilePath}`);
-//       } catch (err) {
-//         console.error(`Error deleting temporary proto file:`, err);
-//       }
-//     }
-//   }
-// }
 
 // Extract services from reflection data
 // function extractServicesFromReflection(serviceInfo, packageName) {
@@ -1049,6 +914,20 @@ async function callMethodWithProtoFile(
       );
     }
 
+    // Get method metadata to determine if it's a streaming method
+    const methodInfo = Object.entries(serviceClient.service).find(
+      ([name]) => name === methodName
+    )?.[1];
+
+    if (!methodInfo) {
+      throw new Error(
+        `Method ${methodName} not found in service ${serviceName}`
+      );
+    }
+
+    const isClientStreaming = methodInfo.requestStream;
+    const isServerStreaming = methodInfo.responseStream;
+
     // Create a client instance
     const client = new serviceClient(
       serverUrl,
@@ -1057,24 +936,259 @@ async function callMethodWithProtoFile(
 
     console.log(`Client created successfully. Calling method: ${methodName}`);
     console.log(`Request data:`, JSON.stringify(requestData, null, 2));
+    console.log(
+      `Method type: client streaming: ${isClientStreaming}, server streaming: ${isServerStreaming}`
+    );
 
-    // Make the gRPC call
-    return new Promise((resolve, reject) => {
-      client[methodName](requestData, (err, response) => {
-        if (err) {
-          console.error(`gRPC error calling ${methodName}:`, err);
-          reject(err);
-        } else {
-          console.log(`Received response from ${methodName}:`, response);
-          resolve({ success: true, data: response });
-        }
+    // Handle different call types based on streaming flags
+    // Case 1: Unary call (no streaming)
+    if (!isClientStreaming && !isServerStreaming) {
+      return new Promise((resolve, reject) => {
+        client[methodName](requestData, (err, response) => {
+          if (err) {
+            console.error(`gRPC error calling ${methodName}:`, err);
+            reject(err);
+          } else {
+            console.log(`Received response from ${methodName}:`, response);
+            resolve({ success: true, data: response });
+          }
+        });
       });
-    });
+    }
+    // Case 2: Server streaming (client sends one request, server sends multiple responses)
+    else if (!isClientStreaming && isServerStreaming) {
+      return handleServerStreaming(client, methodName, requestData);
+    }
+    // Case 3: Client streaming (client sends multiple requests, server sends one response)
+    else if (isClientStreaming && !isServerStreaming) {
+      return handleClientStreaming(client, methodName, requestData);
+    }
+    // Case 4: Bidirectional streaming (both client and server send multiple messages)
+    else {
+      return handleBidirectionalStreaming(client, methodName, requestData);
+    }
   } catch (err) {
     console.error(`Error in callMethodWithProtoFile:`, err);
     throw err;
   }
 }
+
+// Handle server streaming (client sends one request, server sends multiple responses)
+function handleServerStreaming(client, methodName, requestData) {
+  return {
+    success: true,
+    streaming: true,
+    streamType: "SERVER_STREAMING",
+    startStream: (event) => {
+      try {
+        console.log(`Starting server streaming for ${methodName}`);
+        const call = client[methodName](requestData);
+
+        // Set up event listeners for the stream
+        call.on("data", (response) => {
+          console.log(`Received streaming response:`, response);
+          event.sender.send("stream-response", {
+            type: "data",
+            methodName,
+            data: response,
+          });
+        });
+
+        call.on("end", () => {
+          console.log(`Server stream ended for ${methodName}`);
+          event.sender.send("stream-response", {
+            type: "end",
+            methodName,
+          });
+        });
+
+        call.on("error", (error) => {
+          console.error(`Error in server stream for ${methodName}:`, error);
+          event.sender.send("stream-response", {
+            type: "error",
+            methodName,
+            error: error.message,
+          });
+        });
+
+        // Store the call for cancellation
+        const streamId = Date.now().toString();
+        activeStreams[streamId] = call;
+
+        return { streamId };
+      } catch (err) {
+        console.error(`Error starting server stream:`, err);
+        throw err;
+      }
+    },
+  };
+}
+
+// Handle client streaming (client sends multiple requests, server sends one response)
+function handleClientStreaming(client, methodName, initialRequestData) {
+  return {
+    success: true,
+    streaming: true,
+    streamType: "CLIENT_STREAMING",
+    startStream: (event) => {
+      try {
+        console.log(`Starting client streaming for ${methodName}`);
+
+        // Create a client stream
+        const call = client[methodName]((error, response) => {
+          if (error) {
+            console.error(`Error in client stream for ${methodName}:`, error);
+            event.sender.send("stream-response", {
+              type: "error",
+              methodName,
+              error: error.message,
+            });
+          } else {
+            console.log(`Received final response for client stream:`, response);
+            event.sender.send("stream-response", {
+              type: "data",
+              methodName,
+              data: response,
+            });
+            event.sender.send("stream-response", {
+              type: "end",
+              methodName,
+            });
+          }
+        });
+
+        // If initial data was provided, write it to the stream
+        if (initialRequestData) {
+          call.write(initialRequestData);
+        }
+
+        // Store the call for later writing and ending
+        const streamId = Date.now().toString();
+        activeStreams[streamId] = call;
+
+        return { streamId };
+      } catch (err) {
+        console.error(`Error starting client stream:`, err);
+        throw err;
+      }
+    },
+  };
+}
+
+// Handle bidirectional streaming (both client and server send multiple messages)
+function handleBidirectionalStreaming(client, methodName, initialRequestData) {
+  return {
+    success: true,
+    streaming: true,
+    streamType: "BIDI_STREAMING",
+    startStream: (event) => {
+      try {
+        console.log(`Starting bidirectional streaming for ${methodName}`);
+
+        // Create a bidirectional stream
+        const call = client[methodName]();
+
+        // Set up event listeners for the stream
+        call.on("data", (response) => {
+          console.log(`Received bidirectional streaming response:`, response);
+          event.sender.send("stream-response", {
+            type: "data",
+            methodName,
+            data: response,
+          });
+        });
+
+        call.on("end", () => {
+          console.log(`Bidirectional stream ended for ${methodName}`);
+          event.sender.send("stream-response", {
+            type: "end",
+            methodName,
+          });
+        });
+
+        call.on("error", (error) => {
+          console.error(
+            `Error in bidirectional stream for ${methodName}:`,
+            error
+          );
+          event.sender.send("stream-response", {
+            type: "error",
+            methodName,
+            error: error.message,
+          });
+        });
+
+        // If initial data was provided, write it to the stream
+        if (initialRequestData) {
+          call.write(initialRequestData);
+        }
+
+        // Store the call for later writing and ending
+        const streamId = Date.now().toString();
+        activeStreams[streamId] = call;
+
+        return { streamId };
+      } catch (err) {
+        console.error(`Error starting bidirectional stream:`, err);
+        throw err;
+      }
+    },
+  };
+}
+
+// Store active streams for management
+const activeStreams = {};
+
+// Add IPC handlers for stream management
+ipcMain.handle("stream-write", (event, { streamId, data }) => {
+  try {
+    const stream = activeStreams[streamId];
+    if (!stream) {
+      return { success: false, error: "Stream not found" };
+    }
+
+    console.log(`Writing to stream ${streamId}:`, data);
+    stream.write(data);
+    return { success: true };
+  } catch (err) {
+    console.error(`Error writing to stream:`, err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("stream-end", (event, { streamId }) => {
+  try {
+    const stream = activeStreams[streamId];
+    if (!stream) {
+      return { success: false, error: "Stream not found" };
+    }
+
+    console.log(`Ending stream ${streamId}`);
+    stream.end();
+    delete activeStreams[streamId];
+    return { success: true };
+  } catch (err) {
+    console.error(`Error ending stream:`, err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("stream-cancel", (event, { streamId }) => {
+  try {
+    const stream = activeStreams[streamId];
+    if (!stream) {
+      return { success: false, error: "Stream not found" };
+    }
+
+    console.log(`Cancelling stream ${streamId}`);
+    stream.cancel();
+    delete activeStreams[streamId];
+    return { success: true };
+  } catch (err) {
+    console.error(`Error cancelling stream:`, err);
+    return { success: false, error: err.message };
+  }
+});
 
 app.whenReady().then(createWindow);
 

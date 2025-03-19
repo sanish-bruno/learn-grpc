@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   TextField,
@@ -16,10 +16,76 @@ import {
   Divider,
   CircularProgress,
   Alert,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Stack,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
 } from "@mui/material";
 import ReactJson from "react-json-view";
 import { faker } from "@faker-js/faker";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import SendIcon from "@mui/icons-material/Send";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 const { ipcRenderer } = require("electron");
+
+// Create a dark theme
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: {
+      main: "#90caf9",
+    },
+    secondary: {
+      main: "#ce93d8",
+    },
+    background: {
+      default: "#121212",
+      paper: "#1e1e1e",
+    },
+    text: {
+      primary: "#ffffff",
+      secondary: "#b0b0b0",
+    },
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        input: {
+          "&.Mui-disabled": {
+            color: "#666666",
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "rgba(255, 255, 255, 0.23)",
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "rgba(255, 255, 255, 0.4)",
+          },
+        },
+      },
+    },
+  },
+});
 
 const App = () => {
   const [serverUrl, setServerUrl] = useState("");
@@ -35,18 +101,64 @@ const App = () => {
   const [reflectionFailed, setReflectionFailed] = useState(false);
   const [isReflectionMode, setIsReflectionMode] = useState(false);
 
+  // New state for streaming
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamType, setStreamType] = useState(null);
+  const [streamId, setStreamId] = useState(null);
+  const [streamResponses, setStreamResponses] = useState([]);
+  const [isConnectionActive, setIsConnectionActive] = useState(false);
+
+  // Add a ref for auto-scrolling the response container
+  const responseContainerRef = useRef(null);
+
   // Effect to reload services when serverUrl changes if we have a proto file
   useEffect(() => {
     console.log("calling useEffect");
     // Skip the initial render
-    const shouldLoadServices = protoFile && serverUrl && !isReflectionMode; // Don't reload for reflection mode
+    const shouldLoadServices = protoFile && !isReflectionMode; // Don't reload for reflection mode
 
     if (shouldLoadServices) {
       loadServices();
     }
     // We intentionally don't include loadServices in dependencies
     // to avoid infinite loops
-  }, [serverUrl, protoFile, isReflectionMode]);
+  }, [protoFile, isReflectionMode]);
+
+  // Set up stream event listener
+  useEffect(() => {
+    // Set up listener for stream responses
+    const handleStreamResponse = (event, data) => {
+      console.log("Stream response received:", data);
+
+      if (data.type === "data") {
+        // Add new response to the list
+        setStreamResponses((prevResponses) => [
+          ...prevResponses,
+          {
+            timestamp: new Date().toISOString(),
+            data: data.data,
+          },
+        ]);
+      } else if (data.type === "end") {
+        // Stream ended
+        setIsConnectionActive(false);
+        console.log("Stream ended");
+      } else if (data.type === "error") {
+        // Stream error
+        setError(`Stream error: ${data.error}`);
+        setIsConnectionActive(false);
+        console.error("Stream error:", data.error);
+      }
+    };
+
+    // Add the event listener
+    ipcRenderer.on("stream-response", handleStreamResponse);
+
+    // Clean up function to remove the listener
+    return () => {
+      ipcRenderer.removeListener("stream-response", handleStreamResponse);
+    };
+  }, []);
 
   const generateSampleValue = (field) => {
     try {
@@ -260,12 +372,14 @@ const App = () => {
     setSelectedService(event.target.value);
     setSelectedMethod("");
     setRequestMessage("");
+    resetStreamState();
   };
 
   const handleMethodChange = (event) => {
     const methodName = event.target.value;
     setSelectedMethod(methodName);
     setResponse(null);
+    resetStreamState();
 
     const method = services.services[selectedService].methods.find(
       (m) => m.name === methodName
@@ -286,12 +400,27 @@ const App = () => {
     }
   };
 
+  // Reset stream state
+  const resetStreamState = () => {
+    setIsStreaming(false);
+    setStreamType(null);
+    setStreamId(null);
+    setStreamResponses([]);
+    setIsConnectionActive(false);
+  };
+
   const callMethod = async () => {
     if (!serverUrl || !selectedService || !selectedMethod) return;
 
     try {
       setError("");
       setCalling(true);
+
+      // Reset responses if starting a new call
+      if (!isStreaming) {
+        setResponse(null);
+        setStreamResponses([]);
+      }
 
       let requestData;
       try {
@@ -302,6 +431,27 @@ const App = () => {
         return;
       }
 
+      // If we're already streaming and it's a client or bidirectional stream,
+      // we send a message to the existing stream
+      if (
+        isStreaming &&
+        streamId &&
+        (streamType === "CLIENT_STREAMING" || streamType === "BIDI_STREAMING")
+      ) {
+        const result = await ipcRenderer.invoke("stream-write", {
+          streamId,
+          data: requestData,
+        });
+
+        if (!result.success) {
+          setError(`Error sending message to stream: ${result.error}`);
+        }
+
+        setCalling(false);
+        return;
+      }
+
+      // Otherwise, this is a new call
       const result = await ipcRenderer.invoke("call-method", {
         serverUrl,
         serviceName: selectedService,
@@ -313,7 +463,17 @@ const App = () => {
       });
 
       if (result.success) {
-        setResponse(result.data);
+        if (result.streaming) {
+          // Handle streaming response
+          setIsStreaming(true);
+          setStreamType(result.streamType);
+          setStreamId(result.streamId);
+          setIsConnectionActive(true);
+          console.log(`Streaming connection established: ${result.streamType}`);
+        } else {
+          // Handle regular unary response
+          setResponse(result.data);
+        }
       } else {
         setError(`Error calling method: ${result.error}`);
       }
@@ -322,6 +482,48 @@ const App = () => {
       console.error("Error:", err);
     } finally {
       setCalling(false);
+    }
+  };
+
+  // End the stream connection
+  const endStream = async () => {
+    if (!streamId) return;
+
+    try {
+      setError("");
+
+      const result = await ipcRenderer.invoke("stream-end", { streamId });
+
+      if (result.success) {
+        console.log("Stream ended successfully");
+      } else {
+        setError(`Error ending stream: ${result.error}`);
+      }
+    } catch (err) {
+      setError(`Error ending stream: ${err.message}`);
+      console.error("Error:", err);
+    }
+  };
+
+  // Cancel the stream connection
+  const cancelStream = async () => {
+    if (!streamId) return;
+
+    try {
+      setError("");
+
+      const result = await ipcRenderer.invoke("stream-cancel", { streamId });
+
+      if (result.success) {
+        console.log("Stream cancelled successfully");
+        setIsConnectionActive(false);
+        setStreamId(null);
+      } else {
+        setError(`Error cancelling stream: ${result.error}`);
+      }
+    } catch (err) {
+      setError(`Error cancelling stream: ${err.message}`);
+      console.error("Error:", err);
     }
   };
 
@@ -391,256 +593,485 @@ const App = () => {
     }
   };
 
+  // Helper function to truncate JSON for accordion headers
+  const truncateJson = (jsonData, maxLength = 50) => {
+    try {
+      const str = JSON.stringify(jsonData);
+      if (str.length <= maxLength) return str;
+      return str.substring(0, maxLength) + "...";
+    } catch (err) {
+      return "Response data";
+    }
+  };
+
+  // Auto-scroll to bottom when new responses come in
+  useEffect(() => {
+    if (
+      responseContainerRef.current &&
+      isStreaming &&
+      streamResponses.length > 0
+    ) {
+      responseContainerRef.current.scrollTop =
+        responseContainerRef.current.scrollHeight;
+    }
+  }, [streamResponses, isStreaming]);
+
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        gRPC Client
-      </Typography>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          gRPC Client
+        </Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
-        <Box
-          component="form"
-          noValidate
-          autoComplete="off"
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <TextField
-              label="Server URL"
-              variant="outlined"
-              fullWidth
-              value={serverUrl}
-              onChange={(e) => setServerUrl(e.target.value)}
-              placeholder="localhost:50051"
-              disabled={loading}
-            />
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Button
-              variant="contained"
-              onClick={tryServerReflection}
-              disabled={!serverUrl || loading}
-              startIcon={
-                loading ? <CircularProgress size={20} color="inherit" /> : null
-              }
-            >
-              {loading ? "Loading..." : "Fetch Reflection"}
-            </Button>
-
-            <Button
-              variant="outlined"
-              onClick={selectProtoFile}
-              disabled={loading}
-            >
-              {protoFile ? "Change Proto File" : "Select Proto File"}
-            </Button>
-
-            {protoFile && !isReflectionMode && (
-              <>
-                <Chip
-                  label={protoFile.path.split("/").pop()}
-                  onDelete={() => setProtoFile(null)}
-                />
-                {loading && (
-                  <Typography
-                    variant="caption"
-                    sx={{ ml: 1, display: "flex", alignItems: "center" }}
-                  >
-                    <CircularProgress size={16} sx={{ mr: 1 }} />
-                    Loading services...
-                  </Typography>
-                )}
-              </>
-            )}
-          </Box>
-        </Box>
-
-        {reflectionFailed && (
-          <Box sx={{ mt: 2, p: 2, bgcolor: "#fff4e5", borderRadius: 1 }}>
-            <Typography>
-              Server reflection not available. Please select a proto file and
-              load services.
-            </Typography>
-          </Box>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         )}
-      </Paper>
 
-      {services && (
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Available Services
-          </Typography>
+        <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+          <Box
+            component="form"
+            noValidate
+            autoComplete="off"
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <TextField
+                label="Server URL"
+                variant="outlined"
+                fullWidth
+                value={serverUrl}
+                onChange={(e) => setServerUrl(e.target.value)}
+                placeholder="localhost:50051"
+                disabled={loading}
+              />
+            </Box>
 
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel>Select Service</InputLabel>
-            <Select
-              value={selectedService}
-              onChange={handleServiceChange}
-              label="Select Service"
-            >
-              {Object.entries(services.services).map(([key, service]) => (
-                <MenuItem key={key} value={key}>
-                  {service.name} ({service.package})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {selectedService && (
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Select Method</InputLabel>
-              <Select
-                value={selectedMethod}
-                onChange={handleMethodChange}
-                label="Select Method"
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button
+                variant="contained"
+                onClick={tryServerReflection}
+                disabled={!serverUrl || loading}
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : null
+                }
               >
-                {services.services[selectedService].methods.map((method) => (
-                  <MenuItem key={method.name} value={method.name}>
-                    {method.name}
-                    <Chip
-                      label={method.type}
-                      size="small"
-                      sx={{ ml: 1 }}
-                      color={getMethodColor(method.type)}
-                    />
+                {loading ? "Loading..." : "Fetch Reflection"}
+              </Button>
+
+              <Button
+                variant="outlined"
+                onClick={selectProtoFile}
+                disabled={loading}
+              >
+                {protoFile ? "Change Proto File" : "Select Proto File"}
+              </Button>
+
+              {protoFile && !isReflectionMode && (
+                <>
+                  <Chip
+                    label={protoFile.path.split("/").pop()}
+                    onDelete={() => setProtoFile(null)}
+                  />
+                  {loading && (
+                    <Typography
+                      variant="caption"
+                      sx={{ ml: 1, display: "flex", alignItems: "center" }}
+                    >
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      Loading services...
+                    </Typography>
+                  )}
+                </>
+              )}
+            </Box>
+          </Box>
+
+          {reflectionFailed && (
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                bgcolor: "rgba(255, 152, 0, 0.1)",
+                borderRadius: 1,
+              }}
+            >
+              <Typography>
+                Server reflection not available. Please select a proto file and
+                load services.
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+
+        {services && (
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Available Services
+            </Typography>
+
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Select Service</InputLabel>
+              <Select
+                value={selectedService}
+                onChange={handleServiceChange}
+                label="Select Service"
+              >
+                {Object.entries(services.services).map(([key, service]) => (
+                  <MenuItem key={key} value={key}>
+                    {service.name} ({service.package})
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-          )}
 
-          {selectedMethod && (
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Request Message
-                  </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={regenerateRequest}
-                      size="small"
-                    >
-                      Regenerate Sample Request
-                    </Button>
-                  </Box>
-                  <TextareaAutosize
-                    minRows={10}
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      fontFamily: "monospace",
-                      fontSize: "14px",
-                    }}
-                    value={requestMessage}
-                    onChange={(e) => setRequestMessage(e.target.value)}
-                  />
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ mt: 2 }}
-                    onClick={callMethod}
-                    disabled={calling}
-                    startIcon={
-                      calling && <CircularProgress size={20} color="inherit" />
-                    }
-                  >
-                    {calling ? "Calling..." : "Send Request"}
-                  </Button>
-                </Box>
-              </Grid>
+            {selectedService && (
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>Select Method</InputLabel>
+                <Select
+                  value={selectedMethod}
+                  onChange={handleMethodChange}
+                  label="Select Method"
+                >
+                  {services.services[selectedService].methods.map((method) => (
+                    <MenuItem key={method.name} value={method.name}>
+                      {method.name}
+                      <Chip
+                        label={formatMethodType(method.type)}
+                        size="small"
+                        sx={{ ml: 1 }}
+                        color={getMethodColor(method.type)}
+                      />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
 
-              <Grid item xs={12} md={6}>
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Response
-                  </Typography>
-                  {calling ? (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", p: 3 }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  ) : response ? (
+            {selectedMethod && (
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Request Message
+                    </Typography>
                     <Box
                       sx={{
-                        backgroundColor: "#2b2b2b",
-                        borderRadius: 1,
-                        p: 2,
-                        minHeight: "200px",
-                        maxHeight: "500px",
-                        overflow: "auto",
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 2,
+                        gap: 1,
                       }}
                     >
-                      <ReactJson
-                        src={response}
-                        theme="monokai"
-                        displayDataTypes={false}
-                        enableClipboard={true}
-                        style={{
-                          fontFamily: "monospace",
-                          fontSize: "14px",
-                        }}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography color="text.secondary" sx={{ mt: 2 }}>
-                      Response will appear here after sending the request
-                    </Typography>
-                  )}
-                </Box>
-              </Grid>
-            </Grid>
-          )}
+                      <Button
+                        variant="outlined"
+                        onClick={regenerateRequest}
+                        size="small"
+                      >
+                        Regenerate Sample Request
+                      </Button>
 
-          {/* Show proto file content if available */}
-          {protoFile && protoFile.content && (
-            <Box sx={{ mt: 3 }}>
-              <Divider sx={{ my: 3 }} />
-              <Typography variant="h6" gutterBottom>
-                Proto File Content
-              </Typography>
-              <TextareaAutosize
-                minRows={10}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  fontFamily: "monospace",
-                  fontSize: "14px",
-                  backgroundColor: "#f5f5f5",
-                }}
-                value={protoFile.content}
-                readOnly
-              />
-            </Box>
-          )}
-        </Paper>
-      )}
-    </Container>
+                      {isStreaming && (
+                        <>
+                          <Typography variant="body2" sx={{ ml: 1 }}>
+                            Stream Type: {streamType}
+                          </Typography>
+                          {isConnectionActive && (
+                            <Chip
+                              icon={<CheckCircleIcon />}
+                              label="Connected"
+                              color="success"
+                              size="small"
+                            />
+                          )}
+                          <IconButton
+                            color="error"
+                            onClick={cancelStream}
+                            disabled={!isConnectionActive}
+                            title="Terminate connection"
+                          >
+                            <CancelIcon />
+                          </IconButton>
+                        </>
+                      )}
+                    </Box>
+                    <TextareaAutosize
+                      minRows={10}
+                      style={{
+                        width: "100%",
+                        padding: "8px",
+                        fontFamily: "monospace",
+                        fontSize: "14px",
+                        backgroundColor: "#2d2d2d",
+                        color: "#e0e0e0",
+                        border: "1px solid #555",
+                        borderRadius: "4px",
+                      }}
+                      value={requestMessage}
+                      onChange={(e) => setRequestMessage(e.target.value)}
+                    />
+                    <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
+                      {isStreaming &&
+                      (streamType === "CLIENT_STREAMING" ||
+                        streamType === "BIDI_STREAMING") ? (
+                        <>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={callMethod}
+                            disabled={calling || !isConnectionActive}
+                            startIcon={
+                              calling ? (
+                                <CircularProgress size={20} color="inherit" />
+                              ) : (
+                                <SendIcon />
+                              )
+                            }
+                          >
+                            {calling ? "Sending..." : "Send Message"}
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={endStream}
+                            disabled={!isConnectionActive}
+                          >
+                            End Stream
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={callMethod}
+                          disabled={calling}
+                          startIcon={
+                            calling && (
+                              <CircularProgress size={20} color="inherit" />
+                            )
+                          }
+                        >
+                          {calling ? "Calling..." : "Send Request"}
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Response
+                    </Typography>
+                    {calling ? (
+                      <Box
+                        sx={{ display: "flex", justifyContent: "center", p: 3 }}
+                      >
+                        <CircularProgress />
+                      </Box>
+                    ) : isStreaming ? (
+                      // Show streaming responses as accordions
+                      <Box
+                        ref={responseContainerRef}
+                        sx={{
+                          backgroundColor: "#1a1a1a",
+                          borderRadius: 1,
+                          p: 2,
+                          minHeight: "200px",
+                          maxHeight: "500px",
+                          overflow: "auto",
+                          scrollBehavior: "smooth",
+                        }}
+                      >
+                        {streamResponses.length > 0 ? (
+                          <Box sx={{ width: "100%" }}>
+                            {streamResponses.map((resp, index) => (
+                              <Accordion
+                                key={index}
+                                sx={{
+                                  backgroundColor: "rgba(255,255,255,0.03)",
+                                  color: "rgba(255,255,255,0.9)",
+                                  mb: 1,
+                                  "&:before": {
+                                    display: "none",
+                                  },
+                                  "&.Mui-expanded": {
+                                    margin: "0 0 8px 0",
+                                  },
+                                }}
+                              >
+                                <AccordionSummary
+                                  expandIcon={
+                                    <ExpandMoreIcon
+                                      sx={{ color: "rgba(255,255,255,0.7)" }}
+                                    />
+                                  }
+                                  aria-controls={`panel${index}-content`}
+                                  id={`panel${index}-header`}
+                                  sx={{
+                                    borderBottom:
+                                      "1px solid rgba(255,255,255,0.1)",
+                                    minHeight: "48px",
+                                    "&.Mui-expanded": {
+                                      minHeight: "48px",
+                                    },
+                                  }}
+                                >
+                                  <Stack
+                                    direction="row"
+                                    spacing={2}
+                                    alignItems="center"
+                                    sx={{ width: "100%" }}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{ color: "rgba(255,255,255,0.6)" }}
+                                    >
+                                      {new Date(
+                                        resp.timestamp
+                                      ).toLocaleTimeString()}
+                                    </Typography>
+                                    <Typography
+                                      noWrap
+                                      sx={{
+                                        fontFamily: "monospace",
+                                        fontSize: "14px",
+                                        flexGrow: 1,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {truncateJson(resp.data)}
+                                    </Typography>
+                                  </Stack>
+                                </AccordionSummary>
+                                <AccordionDetails
+                                  sx={{
+                                    p: 1,
+                                    backgroundColor: "rgba(0,0,0,0.4)",
+                                  }}
+                                >
+                                  <ReactJson
+                                    src={resp.data}
+                                    theme="monokai"
+                                    displayDataTypes={false}
+                                    enableClipboard={true}
+                                    style={{
+                                      fontFamily: "monospace",
+                                      fontSize: "14px",
+                                    }}
+                                  />
+                                </AccordionDetails>
+                              </Accordion>
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography
+                            color="rgba(255,255,255,0.7)"
+                            sx={{ p: 2 }}
+                          >
+                            Waiting for streaming responses...
+                          </Typography>
+                        )}
+                      </Box>
+                    ) : response ? (
+                      // Show unary response
+                      <Box
+                        sx={{
+                          backgroundColor: "#1a1a1a",
+                          borderRadius: 1,
+                          p: 2,
+                          minHeight: "200px",
+                          maxHeight: "500px",
+                          overflow: "auto",
+                        }}
+                      >
+                        <ReactJson
+                          src={response}
+                          theme="monokai"
+                          displayDataTypes={false}
+                          enableClipboard={true}
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: "14px",
+                          }}
+                        />
+                      </Box>
+                    ) : (
+                      <Typography color="text.secondary" sx={{ mt: 2 }}>
+                        Response will appear here after sending the request
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
+            )}
+
+            {/* Show proto file content if available */}
+            {protoFile && protoFile.content && (
+              <Box sx={{ mt: 3 }}>
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="h6" gutterBottom>
+                  Proto File Content
+                </Typography>
+                <TextareaAutosize
+                  minRows={10}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    fontFamily: "monospace",
+                    fontSize: "14px",
+                    backgroundColor: "#2d2d2d",
+                    color: "#e0e0e0",
+                    border: "1px solid #555",
+                    borderRadius: "4px",
+                  }}
+                  value={protoFile.content}
+                  readOnly
+                />
+              </Box>
+            )}
+          </Paper>
+        )}
+      </Container>
+    </ThemeProvider>
   );
 };
 
 // Helper function to get chip color based on method type
 const getMethodColor = (type) => {
+  console.log("getMethodColor", type);
   switch (type) {
-    case "Unary":
+    case "UNARY":
       return "primary";
-    case "Client Streaming":
+    case "CLIENT_STREAMING":
       return "secondary";
-    case "Server Streaming":
+    case "SERVER_STREAMING":
       return "success";
-    case "Bidirectional Streaming":
+    case "BIDI_STREAMING":
       return "warning";
     default:
       return "default";
+  }
+};
+
+// Helper function to format method types for display
+const formatMethodType = (type) => {
+  switch (type) {
+    case "UNARY":
+      return "Unary";
+    case "CLIENT_STREAMING":
+      return "Client Streaming";
+    case "SERVER_STREAMING":
+      return "Server Streaming";
+    case "BIDI_STREAMING":
+      return "Bidirectional Streaming";
+    default:
+      return type;
   }
 };
 
