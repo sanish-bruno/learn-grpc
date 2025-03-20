@@ -66,28 +66,22 @@ ipcMain.handle("try-reflection", async (event, { serverUrl }) => {
       grpc.credentials.createInsecure()
     );
 
+    console.log("Reflection client created");
+
     // List all services to check if reflection is supported
     console.log("Listing services via reflection...");
     const services = await reflection.listServices();
     console.log(`Found ${services.length} services via reflection:`, services);
 
-    // Skip reflection service itself
-    const filteredServices = services.filter(
-      (service) => service !== "grpc.reflection.v1alpha.ServerReflection"
-    );
-
-    if (filteredServices.length === 0) {
-      return {
-        success: false,
-        error: "No services found via reflection",
-        reflectionSupported: true,
-      };
-    }
+    // const root = await reflection.fileContainingSymbol(services[0]);
+    // const pkgDefinition = protoLoader.loadFileDescriptorSetFromBuffer(root);
+    // // console.log("Root:", root);
+    // console.log("Pkg Definition:", pkgDefinition);
 
     // Process each service to extract methods and types
     const serviceDetails = {};
 
-    for (const service of filteredServices) {
+    for (const service of services) {
       try {
         console.log(`Processing service: ${service}`);
 
@@ -381,74 +375,74 @@ function generateMessageDefinition(messageName, typeInfo) {
 
   // Add all fields
   if (typeInfo.fields) {
-    console.log(
-      `Message ${messageName} has ${Object.keys(typeInfo.fields).length} fields`
-    );
+    // console.log(
+    //   `Message ${messageName} has ${Object.keys(typeInfo.fields).length} fields`
+    // );
     let fieldNumber = 1;
     for (const [fieldName, field] of Object.entries(typeInfo.fields)) {
-      console.log(`Processing field: ${fieldName}`, field);
+      // console.log(`Processing field: ${fieldName}`, field);
 
       // Determine repeated status
       const repeated = field.rule === "repeated" ? "repeated " : "";
       if (field.rule === "repeated") {
-        console.log(`Field ${fieldName} is repeated`);
+        // console.log(`Field ${fieldName} is repeated`);
       }
 
       // Determine field type
       let fieldType = field.typeName || field.type;
-      console.log(`Field ${fieldName} initial type: ${fieldType}`);
+      // console.log(`Field ${fieldName} initial type: ${fieldType}`);
 
       // For primitive types, use the type directly; for complex types, use the type name
       if (isPrimitiveType(fieldType)) {
         fieldType = normalizePrimitiveType(fieldType);
-        console.log(
-          `Field ${fieldName} is primitive, normalized to: ${fieldType}`
-        );
+        // console.log(
+        //   `Field ${fieldName} is primitive, normalized to: ${fieldType}`
+        // );
       } else {
         // If it's a complex type, use the simple name
         const typeNameParts = fieldType.split(".");
         const originalFieldType = fieldType;
         fieldType = typeNameParts[typeNameParts.length - 1];
-        console.log(
-          `Field ${fieldName} is complex, simplified from ${originalFieldType} to: ${fieldType}`
-        );
+        // console.log(
+        //   `Field ${fieldName} is complex, simplified from ${originalFieldType} to: ${fieldType}`
+        // );
       }
 
       // Get field ID from reflection data - reflection uses 'id' not 'number'
       const fieldId = field.id || field.number || fieldNumber++;
-      console.log(`Field ${fieldName} assigned id: ${fieldId}`);
+      // console.log(`Field ${fieldName} assigned id: ${fieldId}`);
 
       messageDef += `  ${repeated}${fieldType} ${fieldName} = ${fieldId};\n`;
     }
   } else {
-    console.log(`Message ${messageName} has no fields`);
+    // console.log(`Message ${messageName} has no fields`);
   }
 
   // Add nested types if any
   if (typeInfo.nested && Object.keys(typeInfo.nested).length > 0) {
-    console.log(
-      `Message ${messageName} has nested types: ${Object.keys(
-        typeInfo.nested
-      ).join(", ")}`
-    );
+    // console.log(
+    //   `Message ${messageName} has nested types: ${Object.keys(
+    //     typeInfo.nested
+    //   ).join(", ")}`
+    // );
 
     // Process all nested types
     for (const [nestedName, nestedType] of Object.entries(typeInfo.nested)) {
-      console.log(`Processing nested type: ${nestedName}`, nestedType);
+      // console.log(`Processing nested type: ${nestedName}`, nestedType);
 
       // Handle nested enums
       if (nestedType.values) {
-        console.log(`Processing nested enum: ${nestedName}`);
+        // console.log(`Processing nested enum: ${nestedName}`);
         messageDef += processNestedEnum(nestedName, nestedType, 2);
       }
       // Handle nested messages
       else if (nestedType.fields) {
-        console.log(`Processing nested message: ${nestedName}`);
+        // console.log(`Processing nested message: ${nestedName}`);
         messageDef += processNestedMessage(nestedName, nestedType, 2);
       }
       // Handle other nested types, like nested enums with specific structure
       else if (nestedType.type === "enum" && nestedType.values) {
-        console.log(`Processing nested enum alternative format: ${nestedName}`);
+        // console.log(`Processing nested enum alternative format: ${nestedName}`);
         messageDef += processNestedEnum(nestedName, nestedType, 2);
       }
     }
@@ -581,32 +575,6 @@ function extractTypeName(fullTypeName) {
   return parts[parts.length - 1];
 }
 
-// Extract type information from a protobuf type
-// function extractTypeInfo(type) {
-//   if (!type) {
-//     return { type: "unknown", name: "Unknown" };
-//   }
-
-//   // Handle primitive types
-//   if (typeof type === "string") {
-//     return {
-//       type: "primitive",
-//       name: type,
-//       isPrimitive: true,
-//     };
-//   }
-
-//   // For complex types (usually objects)
-//   return {
-//     type: "message",
-//     name: type.name || "Unknown",
-//     isPrimitive: false,
-//     // Include additional type info if available
-//     fields: type.fields || [],
-//     nested: type.nested || {},
-//   };
-// }
-
 // Helper function to extract type information
 function extractTypeInfo(type) {
   if (!type) return null;
@@ -671,11 +639,12 @@ ipcMain.handle("load-services", async (event, { protoPath, serverUrl }) => {
 
     currentProto = grpc.loadPackageDefinition(packageDefinition);
     currentServices = {};
-
+    console.log("Current proto:", currentProto);
     // Find all services in the proto file
     const services = {};
     for (const [pkgName, pkg] of Object.entries(currentProto)) {
       for (const [serviceName, service] of Object.entries(pkg)) {
+        // console.log("Service:", service);
         if (service.service) {
           const fullServiceName = `${pkgName}.${serviceName}`;
           services[fullServiceName] = {
@@ -757,39 +726,6 @@ ipcMain.handle(
     }
   }
 );
-
-// Extract services from reflection data
-// function extractServicesFromReflection(serviceInfo, packageName) {
-//   const services = {};
-
-//   try {
-//     if (
-//       serviceInfo.nested &&
-//       serviceInfo.nested[packageName] &&
-//       serviceInfo.nested[packageName].nested
-//     ) {
-//       const packageLevel = serviceInfo.nested[packageName].nested;
-
-//       // Find all service definitions in the package
-//       Object.keys(packageLevel).forEach((key) => {
-//         const item = packageLevel[key];
-
-//         // If it has methods, it's a service
-//         if (item.methods) {
-//           const fullServiceName = `${packageName}.${key}`;
-//           services[fullServiceName] = {
-//             name: key,
-//             methods: item.methods,
-//           };
-//         }
-//       });
-//     }
-//   } catch (e) {
-//     console.error("Error extracting services from reflection data:", e);
-//   }
-
-//   return services;
-// }
 
 // Extract message definitions from reflection data
 function extractMessagesFromReflection(serviceInfo, packageName) {
