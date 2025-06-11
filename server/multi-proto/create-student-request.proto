@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package my.package;
+
+import "full-name.proto";
+
+message CreateStudentRequest {
+  FullName name = 1;
+}

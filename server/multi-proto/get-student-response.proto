@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package my.package;
+
+import "student.proto";
+
+message GetStudentResponse {
+  Student student = 1;
+}

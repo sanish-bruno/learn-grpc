@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package myExample;
+
+// Service 1
+service UserService {
+  rpc GetUser (GetUserRequest) returns (User);
+  rpc CreateUser (User) returns (User);
+}
+
+// Service 2
+service ProductService {
+  rpc GetProduct (GetProductRequest) returns (Product);
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+}
+
+// Message definitions
+message GetUserRequest {
+  string id = 1;
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+}
+
+message ListProductsRequest {
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+}

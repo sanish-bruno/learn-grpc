@@ -5,6 +5,10 @@ function createResponseHeaders() {
   const responseHeaders = new gRPC.Metadata();
   responseHeaders.add("custom-header", "custom-value");
   responseHeaders.add("response-time", new Date().toISOString());
+  responseHeaders.add(
+    "set-cookie",
+    "sessionId=abc123; Path=/; HttpOnly; Secure"
+  );
   return responseHeaders;
 }
 
@@ -20,6 +24,17 @@ function createCommonHeaders() {
   const commonHeaders = new gRPC.Metadata();
   commonHeaders.add("server-timestamp", new Date().toISOString());
   commonHeaders.add("server-version", "1.0.0");
+  commonHeaders.add("Access-Control-Allow-Origin", "*");
+  commonHeaders.add(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  commonHeaders.add(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  commonHeaders.add("Access-Control-Allow-Credentials", "true");
+  commonHeaders.add("Access-Control-Max-Age", "86400"); // 24 hours
   return commonHeaders;
 }
 

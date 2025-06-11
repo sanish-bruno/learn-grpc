@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package my.package;
+
+import "create-student-request.proto";
+import "create-student-response.proto";
+import "get-student-request.proto";
+import "get-student-response.proto";
+
+service StudentService {
+  rpc CreateStudent(CreateStudentRequest) returns (CreateStudentResponse);
+  rpc GetStudent(GetStudentRequest) returns (GetStudentResponse);
+}

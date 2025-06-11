@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package my.package;
+
+import "student-id.proto";
+import "full-name.proto";
+
+message Student {
+  StudentId id = 1;
+  FullName name = 2;
+}
