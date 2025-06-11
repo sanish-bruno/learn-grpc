@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package my.package;
+
+message StudentId {
+  string value = 1;
+}

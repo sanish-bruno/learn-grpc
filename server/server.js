@@ -9,6 +9,8 @@ const {
 } = require("./utils/headers");
 const grpcReflection = require("@grpc/reflection");
 const productsDB = require("./products");
+const fs = require("fs");
+const path = require("path");
 
 // Load Product proto file
 const productPackageDef = protoLoader.loadSync("product.proto", {
@@ -37,7 +39,6 @@ function createProduct(call, callback) {
   const data = call.request;
 
   console.log(data);
-  console.log(Category);
 
   // // Validate category using both numeric and text values
   // const validNumericCategories = Object.values(Category).filter(
@@ -109,6 +110,9 @@ function readProduct(call, callback) {
 
   const productId = call.request.id;
   const selectedProduct = productsDB.getProductById(productId);
+
+  console.log("call.request", call.request);
+  console.log("selectedProduct", selectedProduct);
 
   const trailerMetadata = createTrailerMetadata();
 
@@ -361,15 +365,48 @@ server.addService(
 
 const PRODUCT_SERVICE_PORT = 4000;
 
+// Read certificate files
+const rootCert = fs.readFileSync(
+  path.join(__dirname, "certs/localhost-cert.pem")
+);
+const certChain = fs.readFileSync(
+  path.join(__dirname, "certs/server-cert.pem")
+);
+const privateKey = fs.readFileSync(
+  path.join(__dirname, "certs/server-key.pem")
+);
+
+// Create SSL credentials for tls
+// const credentials = gRPC.ServerCredentials.createSsl(null, [
+//   {
+//     private_key: privateKey,
+//     cert_chain: certChain,
+//   },
+// ]);
+
+// // Create SSL credentials for mtls
+// const credentials = gRPC.ServerCredentials.createSsl(
+//   rootCert,
+//   [
+//     {
+//       private_key: privateKey,
+//       cert_chain: certChain,
+//     },
+//   ],
+//   true
+// );
+
+const credentials = gRPC.ServerCredentials.createInsecure();
+
 server.bindAsync(
   `0.0.0.0:${PRODUCT_SERVICE_PORT}`,
-  gRPC.ServerCredentials.createInsecure(),
+  credentials,
   (error, port) => {
     if (error) {
       console.error(error);
       return;
     }
-    console.log(`Product service running at http://0.0.0.0:${port}`);
+    console.log(`Product service running with mTLS at https://0.0.0.0:${port}`);
     console.log(`Available services: Product`);
   }
 );

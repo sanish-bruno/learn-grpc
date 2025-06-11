@@ -9,6 +9,7 @@ const grpcReflection = require("grpc-reflection-js");
 
 let currentProto = null;
 let currentServices = {};
+const connections = new Map();
 
 function createWindow() {
   const mainWindow = new BrowserWindow({

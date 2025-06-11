@@ -64,10 +64,10 @@
   },
   {
     "id": 10,
-    "name": "ut",
-    "description": "amet veniam enim",
-    "price": -87411496,
-    "category": "MICROPHONES"
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
   },
   {
     "id": 11,
@@ -208,10 +208,723 @@
     "price": 646.7433471679688
   },
   {
-    "id": 31,
-    "name": "Ergonomic Plastic Salad",
-    "description": "The Apollotech B340 is an affordable wireless mouse with reliable connectivity, 12 months battery life and modern design",
-    "price": 40.529998779296875,
+    "id": 32,
+    "name": "Generic Fresh Tuna",
+    "description": "The beautiful range of Apple Naturalé that has an exciting mix of natural ingredients. With the Goodness of 100% Natural Ingredients",
+    "price": 187.72999572753906,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 33,
+    "name": "Electronic Concrete Fish",
+    "description": "New ABC 13 9370, 13.3, 5th Gen CoreA5-8250U, 8GB RAM, 256GB SSD, power UHD Graphics, OS 10 Home, OS Office A & J 2016",
+    "price": 972.4299926757812
+  },
+  {
+    "id": 34,
+    "name": "Incredible Frozen Fish",
+    "description": "The slim & simple Maple Gaming Keyboard from Dev Byte comes with a sleek body and 7- Color RGB LED Back-lighting for smart functionality",
+    "price": 585.5599975585938,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 35,
+    "name": "Incredible Frozen Fish",
+    "description": "The slim & simple Maple Gaming Keyboard from Dev Byte comes with a sleek body and 7- Color RGB LED Back-lighting for smart functionality",
+    "price": 585.5599975585938,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 36,
+    "name": "Incredible Frozen Fish",
+    "description": "The slim & simple Maple Gaming Keyboard from Dev Byte comes with a sleek body and 7- Color RGB LED Back-lighting for smart functionality",
+    "price": 585.5599975585938,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 37,
+    "name": "Handmade Bronze Towels",
+    "description": "The automobile layout consists of a front-engine design, with transaxle-type transmissions mounted at the rear of the engine and four wheel drive",
+    "price": 698.72998046875,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 38,
+    "name": "Intelligent Cotton Bacon",
+    "description": "New range of formal shirts are designed keeping you in mind. With fits and styling that will make you stand apart",
+    "price": 130.02999877929688,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 39,
+    "name": "Sleek Concrete Table",
+    "description": "The slim & simple Maple Gaming Keyboard from Dev Byte comes with a sleek body and 7- Color RGB LED Back-lighting for smart functionality",
+    "price": 841.280029296875,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 40,
+    "name": "Small Steel Bacon",
+    "description": "Boston's most advanced compression wear technology increases muscle oxygenation, stabilizes active muscles",
+    "price": 77.66999816894531,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 41,
+    "name": "Small Steel Bacon",
+    "description": "Boston's most advanced compression wear technology increases muscle oxygenation, stabilizes active muscles",
+    "price": 77.66999816894531,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 42,
+    "name": "Small Steel Bacon",
+    "description": "Boston's most advanced compression wear technology increases muscle oxygenation, stabilizes active muscles",
+    "price": 77.66999816894531,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 43,
+    "name": "Small Steel Bacon",
+    "description": "Boston's most advanced compression wear technology increases muscle oxygenation, stabilizes active muscles",
+    "price": 77.66999816894531,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 44,
+    "name": "Elegant Rubber Chicken",
+    "description": "The Nagasaki Lander is the trademarked name of several series of Nagasaki sport bikes, that started with the 1984 ABC800J",
+    "price": 986.3800048828125,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 45,
+    "name": "Sleek Fresh Chicken",
+    "description": "New range of formal shirts are designed keeping you in mind. With fits and styling that will make you stand apart",
+    "price": 983.0700073242188,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 46,
+    "name": "Recycled Rubber Chips",
+    "description": "New ABC 13 9370, 13.3, 5th Gen CoreA5-8250U, 8GB RAM, 256GB SSD, power UHD Graphics, OS 10 Home, OS Office A & J 2016",
+    "price": 392.7300109863281,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 47,
+    "name": "eiusmod deserunt dolore est",
+    "description": "Duis aliquip",
+    "price": -97855256,
+    "category": "CAMERA"
+  },
+  {
+    "id": 48,
+    "name": "amet consectetur",
+    "description": "est Lorem aliquip qui deserunt",
+    "price": -99509008,
+    "category": "KEYBOARD"
+  },
+  {
+    "id": 49,
+    "name": "amet consectetur",
+    "description": "est Lorem aliquip qui deserunt",
+    "price": -99509008,
+    "category": "KEYBOARD"
+  },
+  {
+    "id": 50,
+    "name": "amet consectetur",
+    "description": "est Lorem aliquip qui ft",
+    "price": -99509008,
+    "category": "KEYBOARD"
+  },
+  {
+    "id": 51,
+    "name": "amet cotnsectetur",
+    "description": "est Lorem tyaliquip qui ft",
+    "price": -99509008,
+    "category": "MODEMS"
+  },
+  {
+    "id": 52,
+    "name": "Generic Concrete Ball",
+    "description": "The Football Is Good For Training And Recreational Purposes",
+    "price": 775.3099975585938,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 53,
+    "name": "Recycled Plastic Car",
+    "description": "Ergonomic executive chair upholstered in bonded black leather and PVC padded seat and back for all-day comfort and support",
+    "price": 370.6099853515625
+  },
+  {
+    "id": 54,
+    "name": "smart-phonic",
+    "description": "smart-phonic the best smartphone ever",
+    "price": 100,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 55,
+    "name": "smart-phonic",
+    "description": "smart-phonic the best smartphone ever",
+    "price": 100,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 56,
+    "name": "smart-laptop",
+    "description": "smart-laptop the best laptop ever",
+    "price": 200,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 57,
+    "name": "smart-phonic",
+    "description": "smart-phonic the best smartphone ever",
+    "price": 100,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 58,
+    "name": "smart-laptop",
+    "description": "smart-laptop the best laptop ever",
+    "price": 200,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 59,
+    "name": "wfr`",
+    "description": "dfdf",
+    "price": 192,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 60,
+    "name": "smart-phonic",
+    "description": "smart-phonic the best smartphone ever",
+    "price": 100,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 61,
+    "name": "smart-laptop",
+    "description": "smart-laptop the best laptop ever",
+    "price": 200,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 62,
+    "name": "wfr`",
+    "description": "dfdf",
+    "price": 192,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 63,
+    "name": "wfr`",
+    "description": "dfdf",
+    "price": 192,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 64,
+    "name": "wfr`",
+    "description": "dfdf",
+    "price": 192,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 65,
+    "name": "wfr`",
+    "description": "dfdf",
+    "price": 192,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 66,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 67,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 68,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 69,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "LAPTOPS"
+  },
+  {
+    "id": 70,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 71,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 72,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 73,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 74,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 75,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 76,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 77,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 78,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 79,
+    "name": "Hello",
+    "description": "Hello",
+    "price": 1.100000023841858,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 80,
+    "name": "Test Product",
+    "description": "A test product",
+    "price": 99.98999786376953
+  },
+  {
+    "id": 81,
+    "name": "laborum est",
+    "description": "officia",
+    "price": 94171488
+  },
+  {
+    "id": 82,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 83,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 84,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 85,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 86,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 87,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 88,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 89,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 93,
+    "name": "Ergonomic Frozen Pants",
+    "description": "The slim & simple Maple Gaming Keyboard from Dev Byte comes with a sleek body and 7- Color RGB LED Back-lighting for smart functionality",
+    "price": 269.8500061035156,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 94,
+    "name": "Bruno",
+    "description": "Bruno is re-invention of the api client",
+    "price": 100
+  },
+  {
+    "id": 95,
+    "name": "Bruno2",
+    "description": "Bruno is re-invention of the api client",
+    "price": 100,
+    "category": "CAMERA"
+  },
+  {
+    "id": 96,
+    "name": "Bruno2",
+    "description": "Bruno is re-invention of the api client",
+    "price": 100,
+    "category": "CAMERA"
+  },
+  {
+    "id": 97,
+    "name": "Bruno2",
+    "description": "Bruno is re-invention of the api client",
+    "price": 100,
+    "category": "CAMERA"
+  },
+  {
+    "id": 98,
+    "name": "Bruno3",
+    "description": "Bruno is re-invention of the api client",
+    "price": 101,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 99,
+    "name": "Bruno4",
+    "description": "Bruno is re-invention of the api client",
+    "price": 102,
+    "category": "HEADPHONES"
+  },
+  {
+    "id": 100,
+    "name": "Bruno2",
+    "description": "Bruno is re-invention of the api client",
+    "price": 100
+  },
+  {
+    "id": 101,
+    "name": "Bruno22",
+    "description": "Bruno is re-invention of the api client",
+    "price": 100,
+    "category": "CAMERA"
+  },
+  {
+    "id": 102,
+    "name": "Bruno33",
+    "description": "Bruno is re-invention of the api client",
+    "price": 101,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 103,
+    "name": "Bruno44",
+    "description": "Bruno is re-invention of the api client",
+    "price": 102,
+    "category": "HEADPHONES"
+  },
+  {
+    "id": 104,
+    "name": "",
+    "description": "",
+    "price": 0
+  },
+  {
+    "id": 105,
+    "name": "",
+    "description": "",
+    "price": 0
+  },
+  {
+    "id": 106,
+    "name": "",
+    "description": "",
+    "price": 0
+  },
+  {
+    "id": 107,
+    "name": "",
+    "description": "",
+    "price": 0
+  },
+  {
+    "id": 108,
+    "name": "",
+    "description": "",
+    "price": 0
+  },
+  {
+    "id": 109,
+    "name": "bruPhone 100 Pro",
+    "description": "Re-inventing the api client",
+    "price": 1000,
+    "category": "CAMERA"
+  },
+  {
+    "id": 110,
+    "name": "bruPhone 100 Pro Max",
+    "description": "Re-inventing the api client",
+    "price": 1500,
+    "category": "CAMERA"
+  },
+  {
+    "id": 111,
+    "name": "bruPhone 100 mini",
+    "description": "Re-inventing the api client",
+    "price": 700,
+    "category": "CAMERA"
+  },
+  {
+    "id": 112,
+    "name": "bruPhone 100 Pro",
+    "description": "Re-inventing the api client",
+    "price": 1000,
+    "category": "CAMERA"
+  },
+  {
+    "id": 113,
+    "name": "bruPhone 100 Pro Max",
+    "description": "Re-inventing the api client",
+    "price": 1500,
+    "category": "CAMERA"
+  },
+  {
+    "id": 114,
+    "name": "bruPhone 100 mini",
+    "description": "Re-inventing the api client",
+    "price": 700,
+    "category": "CAMERA"
+  },
+  {
+    "id": 115,
+    "name": "bruPhone 100 Pro",
+    "description": "Re-inventing the api client",
+    "price": 1000,
+    "category": "CAMERA"
+  },
+  {
+    "id": 116,
+    "name": "bruPhone 100 Pro",
+    "description": "Re-inventing the api client",
+    "price": 1000,
+    "category": "CAMERA"
+  },
+  {
+    "id": 117,
+    "name": "bruPhone 100 Pro Max",
+    "description": "Re-inventing the api client",
+    "price": 1500,
+    "category": "CAMERA"
+  },
+  {
+    "id": 118,
+    "name": "bruPhone 100 mini",
+    "description": "Re-inventing the api client",
+    "price": 700,
+    "category": "CAMERA"
+  },
+  {
+    "id": 119,
+    "name": "bruPhone 100 Pro",
+    "description": "Re-inventing the api client",
+    "price": 1000,
+    "category": "CAMERA"
+  },
+  {
+    "id": 120,
+    "name": "bruPhone 100 Pro Max",
+    "description": "Re-inventing the api client",
+    "price": 1500,
+    "category": "CAMERA"
+  },
+  {
+    "id": 121,
+    "name": "bruPhone 100 mini",
+    "description": "Re-inventing the api client",
+    "price": 700,
+    "category": "CAMERA"
+  },
+  {
+    "id": 122,
+    "name": "bruPhone 100 Pro",
+    "description": "Re-inventing the api client",
+    "price": 1000,
+    "category": "CAMERA"
+  },
+  {
+    "id": 123,
+    "name": "bruPhone 100 Pro Max",
+    "description": "Re-inventing the api client",
+    "price": 1500,
+    "category": "CAMERA"
+  },
+  {
+    "id": 124,
+    "name": "bruPhone 100 mini",
+    "description": "Re-inventing the api client",
+    "price": 700,
+    "category": "CAMERA"
+  },
+  {
+    "id": 125,
+    "name": "Virginia Rempel",
+    "description": "Laborum iure consequatur. At ipsa officia labore sunt doloribus. Vitae autem quae quod consequatur non omnis architecto suscipit. Repudiandae vitae quae rem voluptates. Soluta omnis fuga assumenda numquam.",
+    "price": 77.33000183105469
+  },
+  {
+    "id": 126,
+    "name": "Terrell Block",
+    "description": "Quam placeat quae. Expedita iure ipsum occaecati labore reiciendis molestias quia. Tempora animi ratione tempore nesciunt dolor saepe a. Odit neque ipsa deserunt. Iste nulla veritatis atque commodi. Adipisci sapiente non.",
+    "price": 845.989990234375
+  },
+  {
+    "id": 127,
+    "name": "Deborah Bergnaum",
+    "description": "Cupiditate necessitatibus iusto quia natus sapiente. Iste eligendi eaque ea quae voluptate sed possimus temporibus. Iure minus deleniti mollitia. Tempore fugit dolore minima quam similique deleniti magnam eligendi. Laudantium iure quisquam nemo voluptatem in ea aperiam.",
+    "price": 619.780029296875
+  },
+  {
+    "id": 128,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 129,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 130,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 131,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 132,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 133,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 134,
+    "name": "sperno",
+    "description": "adicio",
+    "price": 240.1980438232422
+  },
+  {
+    "id": 135,
+    "name": "ex",
+    "description": "cognomen",
+    "price": 522.4686279296875,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 136,
+    "name": "cupiditate",
+    "description": "ulciscor",
+    "price": 803.5006103515625,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 137,
+    "name": "",
+    "description": "",
+    "price": 0,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 138,
+    "name": "benevolentia",
+    "description": "autem",
+    "price": 354.4468994140625
+  },
+  {
+    "id": 139,
+    "name": "copiose",
+    "description": "tantillus",
+    "price": 424.2603454589844,
+    "category": "SMARTPHONE"
+  },
+  {
+    "id": 140,
+    "name": "cito",
+    "description": "vociferor",
+    "price": 949,
     "category": "SMARTPHONE"
   }
 ]

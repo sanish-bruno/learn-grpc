@@ -206,18 +206,14 @@ const reflection = new grpcReflection.ReflectionService(orderPackageDef);
 reflection.addToServer(server);
 
 // Add Order service
-server.addService(
-  orderPackage.Order.service,
-  {
-    createOrder,
-    getOrder,
-    listOrders,
-    updateOrder,
-    deleteOrder,
-    trackOrderStatus,
-  },
-  addCommonHeaders
-);
+server.addService(orderPackage.Order.service, {
+  createOrder,
+  getOrder,
+  listOrders,
+  updateOrder,
+  deleteOrder,
+  trackOrderStatus,
+});
 
 const ORDER_SERVICE_PORT = 4001;
 
