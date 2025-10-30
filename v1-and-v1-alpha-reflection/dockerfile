@@ -1,0 +1,20 @@
+# Build stage
+FROM golang:1.22 AS build
+WORKDIR /src
+COPY go.mod ./
+RUN go mod download
+COPY . .
+# Build two binaries
+RUN CGO_ENABLED=0 go build -o /out/server_v1_only server_v1_only.go server.common.go echo_service.go
+RUN CGO_ENABLED=0 go build -o /out/server_v1alpha_only server_v1alpha_only.go server.common.go echo_service.go
+
+# Runtime images
+FROM gcr.io/distroless/base-debian12 AS v1only
+COPY --from=build /out/server_v1_only /server
+EXPOSE 50051
+ENTRYPOINT ["/server"]
+
+FROM gcr.io/distroless/base-debian12 AS v1alphaonly
+COPY --from=build /out/server_v1alpha_only /server
+EXPOSE 50052
+ENTRYPOINT ["/server"]

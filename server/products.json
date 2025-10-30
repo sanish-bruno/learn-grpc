@@ -926,5 +926,83 @@
     "description": "vociferor",
     "price": 949,
     "category": "SMARTPHONE"
+  },
+  {
+    "id": 141,
+    "name": "apparatus",
+    "description": "consequatur",
+    "price": 609.2207641601562
+  },
+  {
+    "id": 142,
+    "name": "apparatus",
+    "description": "consequatur",
+    "price": 609.2207641601562
+  },
+  {
+    "id": 143,
+    "name": "apparatus",
+    "description": "consequatur",
+    "price": 609.2207641601562
+  },
+  {
+    "id": 144,
+    "name": "apparatus",
+    "description": "consequatur",
+    "price": 609.2207641601562
+  },
+  {
+    "id": 145,
+    "name": "tersus",
+    "description": "credo",
+    "price": 932.7862548828125
+  },
+  {
+    "id": 146,
+    "name": "tersus",
+    "description": "credo",
+    "price": 932.7862548828125
+  },
+  {
+    "id": 147,
+    "name": "tyrannus",
+    "description": "timor",
+    "price": 919.0899658203125
+  },
+  {
+    "id": 148,
+    "name": "tyrannus",
+    "description": "timor",
+    "price": 919.0899658203125
+  },
+  {
+    "id": 149,
+    "name": "tyrannus",
+    "description": "timor",
+    "price": 919.0899658203125
+  },
+  {
+    "id": 150,
+    "name": "tyrannus",
+    "description": "timor",
+    "price": 919.0899658203125
+  },
+  {
+    "id": 151,
+    "name": "tyrannus",
+    "description": "timor",
+    "price": 919.0899658203125
+  },
+  {
+    "id": 152,
+    "name": "tyrannus",
+    "description": "timor",
+    "price": 919.0899658203125
+  },
+  {
+    "id": 153,
+    "name": "absorbeo",
+    "description": "cuppedia",
+    "price": 260.1495056152344
   }
 ]

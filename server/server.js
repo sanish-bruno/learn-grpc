@@ -12,6 +12,42 @@ const productsDB = require("./products");
 const fs = require("fs");
 const path = require("path");
 
+// Authorization token
+const AUTH_TOKEN = "password";
+
+// Function to verify authorization header
+function verifyAuthorization(call) {
+  const metadata = call.metadata.getMap();
+  const authHeader = metadata["authorization"];
+
+  if (!authHeader) {
+    return {
+      authorized: false,
+      error: {
+        code: gRPC.status.UNAUTHENTICATED,
+        details: "Missing Authorization header",
+      },
+    };
+  }
+
+  // Check if the token matches (assuming format: "Bearer password" or just "password")
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.substring(7)
+    : authHeader;
+
+  if (token !== AUTH_TOKEN) {
+    return {
+      authorized: false,
+      error: {
+        code: gRPC.status.UNAUTHENTICATED,
+        details: "Invalid authorization token",
+      },
+    };
+  }
+
+  return { authorized: true };
+}
+
 // Load Product proto file
 const productPackageDef = protoLoader.loadSync("product.proto", {
   keepCase: true,
@@ -343,7 +379,10 @@ function monitorProductPrices(call) {
 
 const server = new gRPC.Server();
 
+// Create a custom reflection service with authorization
 const reflection = new grpcReflection.ReflectionService(productPackageDef);
+
+// Add the reflection service to the server
 reflection.addToServer(server);
 
 // Add Product service
@@ -367,7 +406,7 @@ const PRODUCT_SERVICE_PORT = 4000;
 
 // Read certificate files
 const rootCert = fs.readFileSync(
-  path.join(__dirname, "certs/localhost-cert.pem")
+  path.join(__dirname, "../../bruno/certs/localhost-cert.pem")
 );
 const certChain = fs.readFileSync(
   path.join(__dirname, "certs/server-cert.pem")
@@ -384,7 +423,7 @@ const privateKey = fs.readFileSync(
 //   },
 // ]);
 
-// // Create SSL credentials for mtls
+// Create SSL credentials for mtls
 // const credentials = gRPC.ServerCredentials.createSsl(
 //   rootCert,
 //   [
