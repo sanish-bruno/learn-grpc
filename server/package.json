@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:product": "nodemon --ignore 'products.json' server.js",
     "start:order": "nodemon --ignore 'orders.json' order-server.js",
+    "start:subpath": "nodemon --ignore 'products.json' subpath-server.js",
     "start": "npm run start:product & npm run start:order"
   },
   "keywords": [],
@@ -16,6 +17,7 @@
     "@grpc/grpc-js": "^1.12.6",
     "@grpc/proto-loader": "^0.7.13",
     "@grpc/reflection": "^1.0.4",
+    "grpc-server-reflection": "^0.1.5",
     "nodemon": "^3.1.9"
   }
 }

@@ -7,46 +7,17 @@ const {
   logIncomingHeaders,
   createCommonHeaders,
 } = require("./utils/headers");
-const grpcReflection = require("@grpc/reflection");
+// const grpcReflection = require("@grpc/reflection");
+const { addReflection } = require("grpc-server-reflection");
 const productsDB = require("./products");
 const fs = require("fs");
-const path = require("path");
+const path = require("node:path");
+const { withAuth } = require("./utils/auth");
+const { authInterceptor } = require("./utils/reflection-auth");
+const { serverAuthInterceptor } = require("./utils/serverInterceptor");
 
 // Authorization token
 const AUTH_TOKEN = "password";
-
-// Function to verify authorization header
-function verifyAuthorization(call) {
-  const metadata = call.metadata.getMap();
-  const authHeader = metadata["authorization"];
-
-  if (!authHeader) {
-    return {
-      authorized: false,
-      error: {
-        code: gRPC.status.UNAUTHENTICATED,
-        details: "Missing Authorization header",
-      },
-    };
-  }
-
-  // Check if the token matches (assuming format: "Bearer password" or just "password")
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.substring(7)
-    : authHeader;
-
-  if (token !== AUTH_TOKEN) {
-    return {
-      authorized: false,
-      error: {
-        code: gRPC.status.UNAUTHENTICATED,
-        details: "Invalid authorization token",
-      },
-    };
-  }
-
-  return { authorized: true };
-}
 
 // Load Product proto file
 const productPackageDef = protoLoader.loadSync("product.proto", {
@@ -143,12 +114,10 @@ function readProduct(call, callback) {
   // Set response headers
   const responseHeaders = createResponseHeaders();
   call.sendMetadata(responseHeaders);
+  console.log("readProduct", call.request);
 
   const productId = call.request.id;
   const selectedProduct = productsDB.getProductById(productId);
-
-  console.log("call.request", call.request);
-  console.log("selectedProduct", selectedProduct);
 
   const trailerMetadata = createTrailerMetadata();
 
@@ -377,30 +346,33 @@ function monitorProductPrices(call) {
   });
 }
 
-const server = new gRPC.Server();
+const server = new gRPC.Server({
+  interceptors: [serverAuthInterceptor],
+});
 
 // Create a custom reflection service with authorization
-const reflection = new grpcReflection.ReflectionService(productPackageDef);
-
-// Add the reflection service to the server
-reflection.addToServer(server);
+// const reflection = new grpcReflection.ReflectionService(productPackageDef);
+const DESCRIPTOR_SET = path.join(__dirname, 'descriptor_set.bin');
+// Pass our auth “interceptor” so reflection requires Authorization:
 
 // Add Product service
 server.addService(
   productPackage.Product.service,
   {
-    createProduct,
-    readProduct,
+    createProduct: createProduct,
+    readProduct: readProduct,
     readProducts,
-    updateProduct,
-    deleteProduct,
+    updateProduct: updateProduct,
+    deleteProduct: deleteProduct,
     createExampleProduct,
-    watchProductUpdates,
-    batchCreateProducts,
-    monitorProductPrices,
+    watchProductUpdates: watchProductUpdates,
+    batchCreateProducts: batchCreateProducts,
+    monitorProductPrices: monitorProductPrices,
   },
   addCommonHeaders
 );
+
+addReflection(server, DESCRIPTOR_SET);
 
 const PRODUCT_SERVICE_PORT = 4000;
 

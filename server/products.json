@@ -1004,5 +1004,11 @@
     "name": "absorbeo",
     "description": "cuppedia",
     "price": 260.1495056152344
+  },
+  {
+    "id": 154,
+    "name": "vicissitudo",
+    "description": "defessus",
+    "price": 168.1205291748047
   }
 ]
