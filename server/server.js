@@ -376,38 +376,67 @@ addReflection(server, DESCRIPTOR_SET);
 
 const PRODUCT_SERVICE_PORT = 4000;
 
-// Read certificate files
-const rootCert = fs.readFileSync(
-  path.join(__dirname, "../../bruno/certs/localhost-cert.pem")
-);
-const certChain = fs.readFileSync(
-  path.join(__dirname, "certs/server-cert.pem")
-);
-const privateKey = fs.readFileSync(
-  path.join(__dirname, "certs/server-key.pem")
-);
+const SUPPORTED_MODES = ["insecure", "tls", "mtls"];
 
-// Create SSL credentials for tls
-// const credentials = gRPC.ServerCredentials.createSsl(null, [
-//   {
-//     private_key: privateKey,
-//     cert_chain: certChain,
-//   },
-// ]);
+function parseMode() {
+  const args = process.argv.slice(2);
+  let mode = process.env.SERVER_MODE;
 
-// Create SSL credentials for mtls
-// const credentials = gRPC.ServerCredentials.createSsl(
-//   rootCert,
-//   [
-//     {
-//       private_key: privateKey,
-//       cert_chain: certChain,
-//     },
-//   ],
-//   true
-// );
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--mode" || arg === "-m") {
+      mode = args[i + 1];
+      i++;
+    } else if (arg.startsWith("--mode=")) {
+      mode = arg.slice("--mode=".length);
+    } else if (SUPPORTED_MODES.includes(arg)) {
+      mode = arg;
+    }
+  }
 
-const credentials = gRPC.ServerCredentials.createInsecure();
+  mode = (mode || "tls").toLowerCase();
+
+  if (!SUPPORTED_MODES.includes(mode)) {
+    console.error(
+      `Invalid mode "${mode}". Supported modes: ${SUPPORTED_MODES.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  return mode;
+}
+
+function buildCredentials(mode) {
+  if (mode === "insecure") {
+    return gRPC.ServerCredentials.createInsecure();
+  }
+
+  const certChain = fs.readFileSync(
+    path.join(__dirname, "certs/server-cert.pem")
+  );
+  const privateKey = fs.readFileSync(
+    path.join(__dirname, "certs/server-key.pem")
+  );
+
+  if (mode === "mtls") {
+    const rootCert = fs.readFileSync(
+      path.join(__dirname, "../../bruno/certs/localhost-cert.pem")
+    );
+    return gRPC.ServerCredentials.createSsl(
+      rootCert,
+      [{ private_key: privateKey, cert_chain: certChain }],
+      true
+    );
+  }
+
+  return gRPC.ServerCredentials.createSsl(null, [
+    { private_key: privateKey, cert_chain: certChain },
+  ]);
+}
+
+const mode = parseMode();
+const credentials = buildCredentials(mode);
+const scheme = mode === "insecure" ? "http" : "https";
 
 server.bindAsync(
   `0.0.0.0:${PRODUCT_SERVICE_PORT}`,
@@ -417,7 +446,9 @@ server.bindAsync(
       console.error(error);
       return;
     }
-    console.log(`Product service running with mTLS at https://0.0.0.0:${port}`);
+    console.log(
+      `Product service running in ${mode.toUpperCase()} mode at ${scheme}://0.0.0.0:${port}`
+    );
     console.log(`Available services: Product`);
   }
 );
