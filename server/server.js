@@ -7,10 +7,17 @@ const {
   logIncomingHeaders,
   createCommonHeaders,
 } = require("./utils/headers");
-const grpcReflection = require("@grpc/reflection");
+// const grpcReflection = require("@grpc/reflection");
+const { addReflection } = require("grpc-server-reflection");
 const productsDB = require("./products");
 const fs = require("fs");
-const path = require("path");
+const path = require("node:path");
+const { withAuth } = require("./utils/auth");
+const { authInterceptor } = require("./utils/reflection-auth");
+const { serverAuthInterceptor } = require("./utils/serverInterceptor");
+
+// Authorization token
+const AUTH_TOKEN = "password";
 
 // Load Product proto file
 const productPackageDef = protoLoader.loadSync("product.proto", {
@@ -107,12 +114,10 @@ function readProduct(call, callback) {
   // Set response headers
   const responseHeaders = createResponseHeaders();
   call.sendMetadata(responseHeaders);
+  console.log("readProduct", call.request);
 
   const productId = call.request.id;
   const selectedProduct = productsDB.getProductById(productId);
-
-  console.log("call.request", call.request);
-  console.log("selectedProduct", selectedProduct);
 
   const trailerMetadata = createTrailerMetadata();
 
@@ -341,62 +346,97 @@ function monitorProductPrices(call) {
   });
 }
 
-const server = new gRPC.Server();
+const server = new gRPC.Server({
+  interceptors: [serverAuthInterceptor],
+});
 
-const reflection = new grpcReflection.ReflectionService(productPackageDef);
-reflection.addToServer(server);
+// Create a custom reflection service with authorization
+// const reflection = new grpcReflection.ReflectionService(productPackageDef);
+const DESCRIPTOR_SET = path.join(__dirname, 'descriptor_set.bin');
+// Pass our auth “interceptor” so reflection requires Authorization:
 
 // Add Product service
 server.addService(
   productPackage.Product.service,
   {
-    createProduct,
-    readProduct,
+    createProduct: createProduct,
+    readProduct: readProduct,
     readProducts,
-    updateProduct,
-    deleteProduct,
+    updateProduct: updateProduct,
+    deleteProduct: deleteProduct,
     createExampleProduct,
-    watchProductUpdates,
-    batchCreateProducts,
-    monitorProductPrices,
+    watchProductUpdates: watchProductUpdates,
+    batchCreateProducts: batchCreateProducts,
+    monitorProductPrices: monitorProductPrices,
   },
   addCommonHeaders
 );
 
+addReflection(server, DESCRIPTOR_SET);
+
 const PRODUCT_SERVICE_PORT = 4000;
 
-// Read certificate files
-const rootCert = fs.readFileSync(
-  path.join(__dirname, "certs/localhost-cert.pem")
-);
-const certChain = fs.readFileSync(
-  path.join(__dirname, "certs/server-cert.pem")
-);
-const privateKey = fs.readFileSync(
-  path.join(__dirname, "certs/server-key.pem")
-);
+const SUPPORTED_MODES = ["insecure", "tls", "mtls"];
 
-// Create SSL credentials for tls
-// const credentials = gRPC.ServerCredentials.createSsl(null, [
-//   {
-//     private_key: privateKey,
-//     cert_chain: certChain,
-//   },
-// ]);
+function parseMode() {
+  const args = process.argv.slice(2);
+  let mode = process.env.SERVER_MODE;
 
-// // Create SSL credentials for mtls
-// const credentials = gRPC.ServerCredentials.createSsl(
-//   rootCert,
-//   [
-//     {
-//       private_key: privateKey,
-//       cert_chain: certChain,
-//     },
-//   ],
-//   true
-// );
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--mode" || arg === "-m") {
+      mode = args[i + 1];
+      i++;
+    } else if (arg.startsWith("--mode=")) {
+      mode = arg.slice("--mode=".length);
+    } else if (SUPPORTED_MODES.includes(arg)) {
+      mode = arg;
+    }
+  }
 
-const credentials = gRPC.ServerCredentials.createInsecure();
+  mode = (mode || "tls").toLowerCase();
+
+  if (!SUPPORTED_MODES.includes(mode)) {
+    console.error(
+      `Invalid mode "${mode}". Supported modes: ${SUPPORTED_MODES.join(", ")}`
+    );
+    process.exit(1);
+  }
+
+  return mode;
+}
+
+function buildCredentials(mode) {
+  if (mode === "insecure") {
+    return gRPC.ServerCredentials.createInsecure();
+  }
+
+  const certChain = fs.readFileSync(
+    path.join(__dirname, "certs/server-cert.pem")
+  );
+  const privateKey = fs.readFileSync(
+    path.join(__dirname, "certs/server-key.pem")
+  );
+
+  if (mode === "mtls") {
+    const rootCert = fs.readFileSync(
+      path.join(__dirname, "../../bruno/certs/localhost-cert.pem")
+    );
+    return gRPC.ServerCredentials.createSsl(
+      rootCert,
+      [{ private_key: privateKey, cert_chain: certChain }],
+      true
+    );
+  }
+
+  return gRPC.ServerCredentials.createSsl(null, [
+    { private_key: privateKey, cert_chain: certChain },
+  ]);
+}
+
+const mode = parseMode();
+const credentials = buildCredentials(mode);
+const scheme = mode === "insecure" ? "http" : "https";
 
 server.bindAsync(
   `0.0.0.0:${PRODUCT_SERVICE_PORT}`,
@@ -406,7 +446,9 @@ server.bindAsync(
       console.error(error);
       return;
     }
-    console.log(`Product service running with mTLS at https://0.0.0.0:${port}`);
+    console.log(
+      `Product service running in ${mode.toUpperCase()} mode at ${scheme}://0.0.0.0:${port}`
+    );
     console.log(`Available services: Product`);
   }
 );

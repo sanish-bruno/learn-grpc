@@ -1,0 +1,14 @@
+services:
+  refl-v1:
+    build:
+      context: .
+      target: v1only
+    ports:
+      - "50051:50051"
+
+  refl-v1alpha:
+    build:
+      context: .
+      target: v1alphaonly
+    ports:
+      - "50052:50052"

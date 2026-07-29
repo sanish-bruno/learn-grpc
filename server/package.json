@@ -5,8 +5,24 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:product": "nodemon --ignore 'products.json' server.js",
+    "start:product:insecure": "nodemon --ignore 'products.json' server.js -- --mode=insecure",
+    "start:product:tls": "nodemon --ignore 'products.json' server.js -- --mode=tls",
+    "start:product:mtls": "nodemon --ignore 'products.json' server.js -- --mode=mtls",
+    "start:http": "nodemon --ignore 'products.json' http-server.js",
+    "start:http:insecure": "nodemon --ignore 'products.json' http-server.js -- --mode=insecure",
+    "start:http:tls": "nodemon --ignore 'products.json' http-server.js -- --mode=tls",
+    "start:http:mtls": "nodemon --ignore 'products.json' http-server.js -- --mode=mtls",
+    "start:ws": "nodemon --ignore 'products.json' ws-server.js",
+    "start:ws:insecure": "nodemon --ignore 'products.json' ws-server.js -- --mode=insecure",
+    "start:ws:tls": "nodemon --ignore 'products.json' ws-server.js -- --mode=tls",
+    "start:ws:mtls": "nodemon --ignore 'products.json' ws-server.js -- --mode=mtls",
     "start:order": "nodemon --ignore 'orders.json' order-server.js",
-    "start": "npm run start:product & npm run start:order"
+    "start:subpath": "nodemon --ignore 'products.json' subpath-server.js",
+    "start": "npm run start:product & npm run start:order",
+    "start:all": "SERVER_MODE=${SERVER_MODE:-tls} node ./scripts/start-all.js",
+    "start:all:insecure": "SERVER_MODE=insecure node ./scripts/start-all.js",
+    "start:all:tls": "SERVER_MODE=tls node ./scripts/start-all.js",
+    "start:all:mtls": "SERVER_MODE=mtls node ./scripts/start-all.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +32,8 @@
     "@grpc/grpc-js": "^1.12.6",
     "@grpc/proto-loader": "^0.7.13",
     "@grpc/reflection": "^1.0.4",
-    "nodemon": "^3.1.9"
+    "grpc-server-reflection": "^0.1.5",
+    "nodemon": "^3.1.9",
+    "ws": "^8.21.1"
   }
 }
